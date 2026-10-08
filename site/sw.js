@@ -1,9 +1,9 @@
-// 课程表 Service Worker · 小克版 r17
+// 课程表 Service Worker · 小克版 r20
 // 规则：首页“网络优先”（联网时永远拿最新版，断网才用缓存）。
 //       JS/CSS 按“完整网址（含 ?v=版本号）”缓存：版本号变了 = 新网址 = 一定去网络拿，不会拿到旧文件。
 //       命中缓存时立即返回，同时在后台向服务器核对一次（ETag，没变只回 304）；
 //       万一发版忘了改版本号，下一次打开也会自动换成新文件，不再需要手动清缓存。
-const V='xk17-20261008';
+const V='xk20-20261008';
 const PREFIX='schedule-pwa-';
 const CACHE=PREFIX+V;
 const CORE=['/','/pwa-v4.js?v='+V,'/manifest.webmanifest','/icons/favicon-v3.svg'];

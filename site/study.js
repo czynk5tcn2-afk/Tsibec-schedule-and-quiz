@@ -39,7 +39,39 @@
   const savePrefs = () => store.set('study:prefs', prefs);
   const progressKey = slug => 'study:' + slug;
   // fav / mem：考点卡收藏、记住了（r16，存卡片键 “章:编号”）
-  const loadProgress = slug => Object.assign({ a: {}, h: [], best: 0, wrong: [], got: [], tab: 0, last: '', f: null, exam: null, fav: [], mem: [] }, store.get(progressKey(slug), {}));
+  // due / log：错题复习安排、每天的刷题记录（r20，见下面“错题隔天再出”“每天的记录”）
+  const loadProgress = slug => {
+    const p = Object.assign({ a: {}, h: [], best: 0, wrong: [], got: [], tab: 0, last: '', f: null, exam: null, fav: [], mem: [], due: {}, log: {} }, store.get(progressKey(slug), {}));
+    for (const id of p.wrong) if (!p.due[id]) p.due[id] = [0, 0]; // r20 以前的错题：今天就能复习
+    return p;
+  };
+
+  /* ───── 日子怎么算（r20）：凌晨 4 点前还算前一天，熬夜刷的题记在当天 ───── */
+  const SHIFT = 4 * 3600e3;
+  const pad2 = n => String(n).padStart(2, '0');
+  function dayBase(t = Date.now()) { const d = new Date(t - SHIFT); d.setHours(0, 0, 0, 0); return d; }
+  const fmtDay = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  const dayKey = t => fmtDay(dayBase(t));
+  const inDays = n => { const d = dayBase(); d.setDate(d.getDate() + n); return d.getTime() + SHIFT; };
+
+  /* ───── 错题隔天再出（r20）：做错的题第二天出现在“今日复习”；复习时答对，再隔 3 天、7 天各出一次，都对就毕业。
+     复习时又错了，从头来（明天再出）。due[题号] = [第几轮, 哪天起该复习]。 ───── */
+  const GAPS = [1, 3, 7];
+  const isDue = (p, id) => !!p.due[id] && p.due[id][1] <= Date.now();
+  function schedWrong(p, id) { p.due[id] = [0, inDays(1)]; }
+  function schedRight(p, id) {
+    if (!isDue(p, id)) return; // 还没到复习的日子，先不动
+    const st = p.due[id][0] + 1;
+    if (st >= GAPS.length) delete p.due[id]; else p.due[id] = [st, inDays(GAPS[st])];
+  }
+  const dueIds = (p, qMap) => Object.keys(p.due).filter(id => isDue(p, id) && (!qMap || (qMap[id] && qMap[id].st !== 'stop')));
+
+  /* ───── 每天的记录（r20）：log[日期] = { n 做题, r 答对, rv 复习过关, mem 记住的卡, got 背会的主观题, ex 模拟卷 [得分, 满分] }，留 60 天 ───── */
+  function logDay(p, k, by = 1) {
+    const key = dayKey(), L = p.log[key] || (p.log[key] = {});
+    L[k] = Math.max(0, (L[k] || 0) + by);
+    const keys = Object.keys(p.log).sort(); while (keys.length > 60) delete p.log[keys.shift()];
+  }
 
   /* ───── 全局浮层 ───── */
   document.body.insertAdjacentHTML('beforeend', `
@@ -75,6 +107,7 @@
   let sheetClose = null;
   function openSheet(html, onClose) {
     pushLayer();
+    sheet.onclick = null; // 上一个弹层挂的点击处理（比如弱项表）不留到下一个
     sheet.innerHTML = '<div class="grip"></div><button class="sheet-x" type="button" data-close aria-label="关闭">' + icon('x') + '</button>' + html;
     scrim.classList.add('on'); sheet.classList.add('on'); sheet.scrollTop = 0;
     sheetClose = onClose || null;
@@ -216,6 +249,8 @@
         <button type="button" id="fAbout">关于这些资料</button>
         ${'serviceWorker' in navigator ? `<button type="button" id="fOff"></button>` : ''}
         <button type="button" id="fBig"></button>
+        <button type="button" id="fExport">导出做题记录</button>
+        <button type="button" id="fImport">导入记录</button>
         ${slug ? `<button type="button" id="fReset">清空这科的记录</button>` : ''}
       </div></footer>`;
   }
@@ -226,6 +261,8 @@
   function bindFoot(slug) {
     refreshFoot();
     $('#fAbout').onclick = () => showWelcome(false);
+    $('#fExport').onclick = showExport;
+    $('#fImport').onclick = showImport;
     const o = $('#fOff');
     if (o) o.onclick = () => {
       if (prefs.offline !== 'yes') { enableOffline(); return; }
@@ -243,10 +280,155 @@
     };
   }
 
+  /* ───── 导出 / 导入做题记录（r20）：换手机、清浏览器前先导出。
+     存成文件，或者复制成一段文字（微信里存不了文件，就发到“文件传输助手”）。
+     导入时只认 study:<科目>、study:<科目>:exam 这两种键，导入的科目整科替换本机记录。 ───── */
+  const PACK = 'skauramaemma-study';
+  const inWeChat = /MicroMessenger/i.test(navigator.userAgent);
+  const okKey = k => { const m = /^study:([a-z]+)(:exam)?$/.exec(k); return !!m && (INDEX?.subjects || []).some(x => x.slug === m[1] && !x.pending); };
+  function packData() {
+    const data = {};
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && okKey(k)) { const v = JSON.parse(localStorage.getItem(k)); if (v && typeof v === 'object') data[k] = v; }
+      }
+    } catch (_) {}
+    return data;
+  }
+  // 每科一句：做了几道题、几道错题
+  function packSummary(data) {
+    return (INDEX?.subjects || []).filter(x => data['study:' + x.slug] || data['study:' + x.slug + ':exam']).map(x => {
+      const p = data['study:' + x.slug] || {};
+      const n = Object.keys(p.a || {}).length, w = (p.wrong || []).length;
+      return `${x.name}：做了 ${n} 道${w ? `，错题 ${w} 道` : ''}${data['study:' + x.slug + ':exam'] ? '，有模拟卷记录' : ''}`;
+    });
+  }
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (_) {
+      try { const t = document.createElement('textarea'); t.value = text; t.style.cssText = 'position:fixed;opacity:0'; document.body.append(t); t.select(); const ok = document.execCommand('copy'); t.remove(); return ok; } catch (_) { return false; }
+    }
+  }
+  function showExport() {
+    const data = packData(), sum = packSummary(data);
+    if (!sum.length) { toast('还没有做题记录可以导出 (・_・;) 先去刷几道吧。'); return; }
+    const text = JSON.stringify({ app: PACK, ver: 1, at: Date.now(), site: V, data });
+    const name = `复习记录-${dayKey().replace(/-/g, '')}.json`;
+    openSheet(`<h2 id="sheetTitle">导出做题记录 📦</h2>
+      <p>换手机、清理浏览器之前先导出一份，到新手机上点“导入记录”就能接着刷。</p>
+      <div class="fine"><b>这次会导出：</b><ul class="sum">${sum.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+      ${inWeChat ? '<p class="tip">在微信里打开的话存不了文件，用“复制成文字”，发给自己的“文件传输助手”存着。</p>' : ''}
+      <div class="acts">
+        <button class="btn btn-b" type="button" id="exFile" data-focus>存成文件</button>
+        <button class="btn btn-ghost" type="button" id="exCopy">复制成文字（${Math.max(1, Math.round(text.length / 1024))} KB）</button>
+      </div>`);
+    $('#exFile').onclick = async () => {
+      const blob = new Blob([text], { type: 'application/json' });
+      // 手机上优先用系统分享（能直接存到“文件”或发微信），不行再走下载
+      try {
+        const file = new File([blob], name, { type: 'application/json' });
+        if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: name }); closeSheet(); toast('导出好了 📦', { y: true }); return; }
+      } catch (e) { if (e?.name === 'AbortError') return; }
+      try {
+        const url = URL.createObjectURL(blob), a = document.createElement('a');
+        a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        closeSheet(); toast(`存好了：${name} 📦 在下载文件夹里找。`, { y: true, ms: 4200 });
+      } catch (_) { toast('存文件没成功 (｡•́︿•̀｡) 试试“复制成文字”。', { ms: 4200 }); }
+    };
+    $('#exCopy').onclick = async () => {
+      if (await copyText(text)) { closeSheet(); toast('复制好了 📋 粘贴到备忘录或微信“文件传输助手”存着，导入时整段粘回来。', { y: true, ms: 5200 }); }
+      else toast('没复制成功 (｡•́︿•̀｡) 试试“存成文件”。', { ms: 4200 });
+    };
+  }
+  function showImport() {
+    openSheet(`<h2 id="sheetTitle">导入做题记录 📥</h2>
+      <p>选之前导出的文件，或者把复制的那段文字粘贴到下面。</p>
+      <div class="acts"><label class="btn btn-b file-btn">选文件<input type="file" id="imFile" accept=".json,application/json,text/plain"></label></div>
+      <textarea class="paste" id="imText" rows="4" placeholder="或者把复制的文字粘贴到这里" aria-label="粘贴导出的文字"></textarea>
+      <div class="acts"><button class="btn btn-ghost" type="button" id="imGo">导入粘贴的文字</button></div>`);
+    $('#imFile').onchange = async e => {
+      const f = e.target.files?.[0]; if (!f) return;
+      try { readPack(await f.text()); } catch (_) { toast('这个文件读不出来 (・_・;)'); }
+    };
+    $('#imGo').onclick = () => { const t = $('#imText').value.trim(); if (!t) { toast('先粘贴导出的那段文字 📋'); return; } readPack(t); };
+  }
+  function readPack(text) {
+    let pack;
+    try { pack = JSON.parse(text); } catch (_) { toast('这不像是导出的记录 (・_・;) 文字要整段复制，别漏了开头结尾。', { ms: 4200 }); return; }
+    const data = {};
+    if (pack && pack.app === PACK && pack.data && typeof pack.data === 'object')
+      for (const [k, v] of Object.entries(pack.data)) if (okKey(k) && v && typeof v === 'object' && !Array.isArray(v)) data[k] = v;
+    const sum = packSummary(data);
+    if (!sum.length) { toast('这份记录里没有能导入的科目 (・_・;)', { ms: 3600 }); return; }
+    const when = pack.at ? new Date(pack.at) : null;
+    openSheet(`<h2 id="sheetTitle">导入这份记录？</h2>
+      <p>${when ? `这是 ${when.getMonth() + 1} 月 ${when.getDate()} 日 ${pad2(when.getHours())}:${pad2(when.getMinutes())} 导出的。` : ''}下面这几科会<b>换成</b>文件里的记录，这台手机上这几科原来的记录会被替换掉；别的科不动。</p>
+      <div class="fine"><ul class="sum">${sum.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+      <div class="acts"><button class="btn btn-b" type="button" id="imYes">导入</button><button class="btn btn-ghost" type="button" data-close data-focus>先不了</button></div>`);
+    $('#imYes').onclick = () => {
+      const slugs = new Set(Object.keys(data).map(k => k.split(':')[1]));
+      let ok = true;
+      for (const sl of slugs) { store.del('study:' + sl); store.del('study:' + sl + ':exam'); }
+      for (const [k, v] of Object.entries(data)) ok = store.set(k, v) && ok;
+      closeSheet();
+      toast(ok ? `导入好了 ✅ ${slugs.size} 科的记录都回来了。` : '有一部分没存进去 (｡•́︿•̀｡) 可能手机空间不够。', { y: ok, ms: 4200 });
+      route();
+    };
+  }
+
+  /* ───── 今日收工卡（r20）：今天各科刷了多少、对了几成、复习了几道，适合截图 ───── */
+  const WEEK = '日一二三四五六';
+  function studyDays() {
+    const days = new Set();
+    for (const x of INDEX.subjects) if (!x.pending) for (const [d, L] of Object.entries(loadProgress(x.slug).log)) if (L.n || L.mem || L.got || L.ex) days.add(d);
+    return days;
+  }
+  function showDayCard() {
+    const k = dayKey(), base = dayBase(), tmr = inDays(1);
+    const rows = INDEX.subjects.filter(x => !x.pending).map(x => {
+      const p = loadProgress(x.slug);
+      return { x, L: p.log[k] || {}, soon: Object.values(p.due).filter(d => d[1] <= tmr).length };
+    });
+    const sum = f => rows.reduce((n, r) => n + (r.L[f] || 0), 0);
+    const n = sum('n'), r = sum('r'), rv = sum('rv'), mem = sum('mem'), got = sum('got'), soon = rows.reduce((t, x) => t + x.soon, 0);
+    const exams = rows.filter(x => x.L.ex);
+    const any = n || mem || got || exams.length;
+    const days = studyDays(), d = dayBase(); if (!days.has(k)) d.setDate(d.getDate() - 1);
+    let streak = 0; while (days.has(fmtDay(d))) { streak++; d.setDate(d.getDate() - 1); }
+    const rate = n ? Math.round(r / n * 100) : null;
+    const say = !any ? pick(['今天还没开刷，来几道再收工？(・ω・)', '先刷 10 道，再心安理得地收工 😌'])
+      : n >= 100 ? pick(['今天刷了一百多道，手指头辛苦了 🫡', '这个量，期末稳了 💪'])
+      : rate != null && rate >= 85 ? pick(['正确率这么高，明天可以挑点难的 😎', '又快又准，今天状态很好 ✨'])
+      : rate != null && rate < 60 ? pick(['错得多不要紧，错过的明天会再来找你 📅', '今天错的就是明天能拿的分 🫂'])
+      : pick(['今天的份做完了，早点睡 🌙', '积少成多，明天接着来 🌱', '辛苦了，去喝口水 🥤']);
+    const active = rows.filter(x => x.L.n || x.L.ex || x.L.mem || x.L.got);
+    openSheet(`<h2 id="sheetTitle" class="sr">今日收工</h2>
+      <div class="daycard" id="dayCard">
+        <div class="dc-head"><span class="num">${base.getMonth() + 1} 月 ${base.getDate()} 日 · 周${WEEK[base.getDay()]}</span><span>今日收工 🌙</span></div>
+        ${any ? `<div class="dc-big"><strong class="num">${n}</strong><span>道题${rate != null ? `<br>正确率 <b class="num">${rate}%</b>` : ''}</span></div>` : '<div class="dc-big none">今天还没刷题</div>'}
+        <div class="dc-tiles">
+          <div><strong class="num">${rv}</strong><small>复习过关</small></div>
+          <div><strong class="num">${mem}</strong><small>记住考点卡</small></div>
+          <div><strong class="num">${got}</strong><small>背会主观题</small></div>
+          <div><strong class="num">${streak}</strong><small>连续学习天数</small></div>
+        </div>
+        ${active.length ? `<div class="dc-subj">${active.map(x => `<div><i style="background:${HUES[hueOf(x.x.slug)][0]}"></i><b>${esc(x.x.name)}</b><span class="num">${[
+          x.L.n ? `${x.L.n} 道 · 对 ${Math.round((x.L.r || 0) / x.L.n * 100)}%` : '',
+          x.L.ex ? `模拟卷 ${x.L.ex[0]}/${x.L.ex[1]}` : '',
+          !x.L.n && !x.L.ex ? [x.L.mem ? `记住 ${x.L.mem} 张卡` : '', x.L.got ? `背会 ${x.L.got} 道` : ''].filter(Boolean).join('，') : ''].filter(Boolean).join('，')}</span></div>`).join('')}</div>` : ''}
+        <p class="dc-say">${say}</p>
+        ${soon ? `<p class="dc-next">明天要复习 <b class="num">${soon}</b> 道错题 📅</p>` : ''}
+      </div>
+      <div class="acts">${any ? '<button class="btn btn-b" type="button" data-close data-focus>收工 😴</button>' : '<button class="btn btn-b" type="button" data-close data-focus>好，去刷几道 ✏️</button>'}</div>
+      ${any ? '<p class="dc-tip">想留个纪念就截个图 📸</p>' : ''}`);
+    if (any && n >= 30) { const c = $('#dayCard').getBoundingClientRect(); setTimeout(() => confetti(c.left + c.width / 2, c.top + 40, 24, 300), 250); }
+  }
+
   /* ───── 夜里打开 ───── */
   function nightCheck() {
     const h = new Date().getHours();
-    if ((h >= 23 || h < 5) && !ss.get('study:night')) { ss.set('study:night', '1'); setTimeout(() => toast('夜深了 🌙 刷完这几题就去睡吧，明天的你会感谢现在的你。', { y: true, ms: 6000 }), 1200); }
+    if ((h >= 23 || h < 5) && !ss.get('study:night')) { ss.set('study:night', '1'); setTimeout(() => toast('夜深了 🌙 刷完这几题就去睡吧，明天的你会感谢现在的你。', { y: true, ms: 6000, action: ['收工卡', showDayCard] }), 1200); }
   }
 
   /* ═════════════ 首页：科目列表 ═════════════ */
@@ -289,11 +471,14 @@
     document.body.dataset.subject = '';
     document.title = '复习资料';
     const subs = INDEX.subjects, resume = lastStudied();
+    const dues = subs.filter(x => !x.pending).map(x => [x, dueIds(loadProgress(x.slug)).length]).filter(x => x[1]);
     app.innerHTML = `<div class="wrap">
       <div class="top"><a class="back" href="/">${icon('back')}课程表</a></div>
       <section class="home-hero"><span class="s1"></span><span class="s2"></span><span class="s3"></span>
         <small>${greeting()}</small><h1>复习资料</h1><p>往届题、考点卡、模拟卷都理好了，挑一科开刷！💪</p></section>
       ${resume ? `<button class="resume" type="button" id="resume"><span class="ico">${icon('play')}</span><span class="t"><small>接着刷 · 上次停在 <span class="num">${esc(resume.p.last)}</span></small><strong>${esc(resume.s.name)}</strong></span>${icon('right')}</button>` : ''}
+      ${dues.length ? `<div class="review-home"><div class="rh-t"><span class="ico">📅</span><span><strong>今日复习 <span class="num">${dues.reduce((n, x) => n + x[1], 0)}</span> 道</strong><small>以前做错的题，今天该再看一眼了</small></span></div>
+        <div class="rh-list">${dues.map(([x, n]) => `<button class="rh-btn" type="button" data-due="${esc(x.slug)}">${esc(x.name)} <b class="num">${n}</b></button>`).join('')}</div></div>` : ''}
       <div class="subjects">${subs.map(s => {
         const [bg, fg] = HUES[hueOf(s.slug)];
         const dot = s.dot || s.name[0];
@@ -301,8 +486,14 @@
         const p = loadProgress(s.slug), done = Object.keys(p.a).length, total = s.scored || s.quiz, pct = total ? Math.min(100, Math.round(done / total * 100)) : 0;
         return `<a class="subject" href="#${s.slug}"><span class="dot${dot.length > 1 ? ' two' : ''}" style="background:${bg};color:${fg}">${esc(dot)}</span><span class="t"><strong>${esc(s.name)}</strong><small>考点卡 ${s.cards} 张，选择题 ${s.quiz} 道${done ? `，已刷 ${pct}%` : ''}</small><span class="bar"><i style="width:${pct}%;background:${bg}"></i></span></span>${icon('right', 'style="color:var(--muted)"')}</a>`;
       }).join('')}</div>
+      <button class="dayend-cta" type="button" id="dayEnd"><span class="ico">🌙</span><span class="t"><strong>今日收工</strong><small>看看今天刷了多少，截图留念</small></span>${icon('right')}</button>
       ${footHTML('')}</div>`;
     bindFoot('');
+    $('#dayEnd').onclick = showDayCard;
+    $$('[data-due]').forEach(b => b.onclick = () => {
+      const p = loadProgress(b.dataset.due); p.tab = 2; p.f = { ch: '', src: '', mode: 'due', stop: false, rand: p.f?.rand || 0 }; store.set(progressKey(b.dataset.due), p);
+      location.hash = b.dataset.due;
+    });
     $('#resume')?.addEventListener('click', () => {
       const p = loadProgress(resume.s.slug); p.tab = 2; store.set(progressKey(resume.s.slug), p);
       location.hash = resume.s.slug;
@@ -421,7 +612,8 @@
     const ex = d.exam, last = S.p.examLast;
     app.innerHTML = `<div class="wrap">
       <div class="top"><a class="back" href="#">${icon('back')}全部科目</a>
-        <button class="pill-btn wrong-btn" type="button" id="wrongBtn">${icon('book', 'style="width:16px;height:16px"')}错题本 <span class="num" id="wrongN">0</span></button></div>
+        <span class="top-r"><button class="pill-btn end-btn" type="button" id="endBtn">🌙 收工</button>
+        <button class="pill-btn wrong-btn" type="button" id="wrongBtn">${icon('book', 'style="width:16px;height:16px"')}错题本 <span class="num" id="wrongN">0</span></button></span></div>
       <div class="subj-head"><section class="hero" id="hero">
         <span class="blob1"></span><span class="blob2"></span><span class="blob3" id="blob3"></span>
         <div class="term">${esc(d.term || '期末复习')}</div>
@@ -461,6 +653,7 @@
       toast(`打开错题本：${n} 道错题 📕 答对一道就移出去一道。`, { bottom: true });
     };
     $('#openExam').onclick = openExamStart;
+    $('#endBtn').onclick = showDayCard;
     setTab(S.p.tab || 0, false);
     if (!reload) scrollTo(0, 0);
     resumeExamIfNeeded();
@@ -546,7 +739,9 @@
   function cardAct(b) {
     const key = b.dataset.key, kind = b.dataset.cardact, list = S.p[kind];
     const on = !list.includes(key);
-    S.p[kind] = on ? [...list, key] : list.filter(x => x !== key); save();
+    S.p[kind] = on ? [...list, key] : list.filter(x => x !== key);
+    if (kind === 'mem') logDay(S.p, 'mem', on ? 1 : -1);
+    save();
     const card = b.closest('.card');
     if (card) { card.classList.toggle(kind, on); const acts = card.querySelector('.card-acts'); if (acts) acts.outerHTML = cardActsHTML(key); }
     paintCardChips();
@@ -784,9 +979,9 @@
   /* ═════════════ 刷题 ═════════════ */
   function buildList() {
     if (S.round) { const i = S.round.ids.indexOf(S.list[S.cur]); S.list = S.round.ids.slice(); S.cur = i < 0 ? 0 : i; return; }
-    const f = S.p.f, wrong = new Set(S.p.wrong);
+    const f = S.p.f, wrong = new Set(S.p.wrong), due = new Set(f.mode === 'due' ? dueIds(S.p, S.qMap) : []);
     S.list = S.d.quiz.filter(q => (f.stop || q.st !== 'stop') && (!f.ch || q.ch === f.ch) && (!f.src || q.src === f.src) && (!f.stt || q.st === f.stt)
-      && (f.mode !== 'wrong' || wrong.has(q.id)) && (f.mode !== 'fresh' || !S.p.a[q.id])).map(q => q.id);
+      && (f.mode !== 'wrong' || wrong.has(q.id)) && (f.mode !== 'fresh' || !S.p.a[q.id]) && (f.mode !== 'due' || due.has(q.id))).map(q => q.id);
     if (f.rand) shuffle(S.list, f.rand);
     const i = S.list.indexOf(S.p.last);
     S.cur = i < 0 ? 0 : i;
@@ -842,17 +1037,21 @@
     const chs = d.chapters.filter(c => !c.appendix).map(c => [c.id, c.title, d.quiz.filter(q => q.ch === c.id && (f.stop || q.st !== 'stop')).length]).filter(c => c[2]);
     const srcs = [...new Set(d.quiz.map(q => q.src))];
     const sts = [['ok', '只看有依据'], ['q', '只看未核实'], ['warn', '只看看条件']].map(([k, t]) => [k, t, d.quiz.filter(q => q.st === k).length]).filter(x => x[2]);
+    const nDue = dueIds(S.p, S.qMap).length;
     panel.innerHTML = `<div class="qside">
+      ${nDue && f.mode !== 'due' ? `<button class="review-cta" type="button" id="dueGo"><span class="ico">📅</span><span class="t"><strong>今日复习 <span class="num">${nDue}</span> 道</strong><small>以前做错的题，隔 1、3、7 天各考一次</small></span>${icon('right')}</button>` : ''}
       <div class="filters wrapf">
         <span class="sel"><select id="fCh" aria-label="按章节筛选"><option value="">全部章节</option>${chs.map(([id, t, n]) => `<option value="${esc(id)}"${f.ch === id ? ' selected' : ''}>${esc(id)} ${esc(t)}（${n}）</option>`).join('')}</select></span>
         ${srcs.length > 1 ? `<span class="sel"><select id="fSrc" aria-label="按来源筛选"><option value="">全部来源</option>${srcs.map(s => `<option${f.src === s ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></span>` : ''}
         ${sts.length > 1 ? `<span class="sel"><select id="fSt" aria-label="按可信度筛选"><option value="">全部可信度</option>${sts.map(([k, t, n]) => `<option value="${k}"${f.stt === k ? ' selected' : ''}>${t}（${n}）</option>`).join('')}</select></span>` : ''}
         <button class="chip" type="button" data-mode="fresh" aria-pressed="${f.mode === 'fresh'}">没做过的</button>
         <button class="chip" type="button" data-mode="wrong" aria-pressed="${f.mode === 'wrong'}">错题本</button>
+        ${nDue || f.mode === 'due' ? `<button class="chip" type="button" data-mode="due" aria-pressed="${f.mode === 'due'}">📅 今日复习 <span class="n num" id="nDue">${nDue}</span></button>` : ''}
         <button class="chip" type="button" id="fRand" aria-pressed="${!!f.rand}">🎲 随机顺序</button>
         <button class="chip" type="button" id="fStop" aria-pressed="${!!f.stop}">显示不计分题</button>
       </div>
       <button class="round-cta" type="button" id="roundGo"><span class="ico">⚡</span><span class="t"><strong>来 10 题</strong><small>从上面这个范围抽 10 道，先抽没做过的</small></span>${icon('right')}</button>
+      <button class="btn btn-ghost sm weak-btn" type="button" id="weakGo">📊 哪几章最弱？</button>
       </div><div class="qmain">
       <div id="quiz"></div>
       <div class="qnav" id="qnav">
@@ -860,6 +1059,8 @@
         <button class="btn btn-b" type="button" id="nextQ">下一题</button>
       </div></div>`;
     $('#roundGo').onclick = startRound;
+    $('#weakGo').onclick = showWeak;
+    $('#dueGo')?.addEventListener('click', () => startDue());
     const refilter = () => { S.p.last = S.list[S.cur] || S.p.last; save(); buildList(); paintQuestion(); };
     $('#fCh').onchange = e => { f.ch = e.target.value; refilter(); };
     $('#fSrc') && ($('#fSrc').onchange = e => { f.src = e.target.value; refilter(); });
@@ -868,7 +1069,7 @@
       f.mode = f.mode === b.dataset.mode ? '' : b.dataset.mode;
       $$('[data-mode]', panel).forEach(x => x.setAttribute('aria-pressed', f.mode === x.dataset.mode)); refilter();
       // 当前题可能没变，只有题数变了，提示一下筛出来多少道
-      toast(f.mode === 'wrong' ? `只看错题：${S.list.length} 道 📕` : f.mode === 'fresh' ? `只看没做过的：${S.list.length} 道 ✏️` : `现在这个范围：${S.list.length} 道`, { bottom: true, ms: 2200 });
+      toast(f.mode === 'wrong' ? `只看错题：${S.list.length} 道 📕` : f.mode === 'due' ? `今日复习：${S.list.length} 道 📅 做完一道少一道。` : f.mode === 'fresh' ? `只看没做过的：${S.list.length} 道 ✏️` : `现在这个范围：${S.list.length} 道`, { bottom: true, ms: 2200 });
       flash($('#quiz'));
     });
     $('#fStop').onclick = e => { f.stop = !f.stop; e.currentTarget.setAttribute('aria-pressed', f.stop); refilter(); if (f.stop) toast('不计分的题，题目本身有问题，看看相关知识就好，不算对错 🤔', { ms: 4200 }); };
@@ -893,8 +1094,8 @@
       return;
     }
     const f = S.p.f;
-    if ((f.mode === 'fresh' || f.mode === 'wrong')) {
-      // 这两个模式下做过 / 做对的题会离开列表，重算后停在原位置
+    if (f.mode === 'fresh' || f.mode === 'wrong' || f.mode === 'due') {
+      // 这几个模式下做过 / 做对 / 复习过的题会离开列表，重算后停在原位置
       const curId = S.list[S.cur]; const keep = S.cur;
       buildList();
       const still = S.list.indexOf(curId);
@@ -907,6 +1108,7 @@
   function emptyQuiz() {
     const f = S.p.f;
     if (f.mode === 'wrong') return `<div class="empty"><big>🎉</big>错题本空空的！<br>${f.ch || f.src ? '这个范围里没有错题。' : '要么全对，要么还没开始刷。'}</div>`;
+    if (f.mode === 'due') { const n = Object.keys(S.p.due).length; return `<div class="empty"><big>📅</big>今天该复习的题都过完了！<br>${n ? `还有 ${n} 道排在后面几天，到时候会出现在这里。` : '以后做错的题，第二天会出现在这里。'}</div>`; }
     if (f.mode === 'fresh') return `<div class="empty"><big>🏆</big>这个范围的题都做过一遍了！<br>去错题本把错的再过一遍吧。</div>`;
     return `<div class="empty"><big>🫥</big>这个范围没有题，换个筛选试试 (・_・;)</div>`;
   }
@@ -920,7 +1122,8 @@
     const q = S.qMap[S.list[S.cur]];
     S.p.last = q.id; save();
     // 错题本里显示“上次答对”的题（模拟卷做错收进来的），直接按没做过显示，能马上重答（r16）
-    const a0 = S.p.a[q.id], a = S.round ? (S.round.res[q.id] != null ? a0 : null) : S.p.f.mode === 'wrong' && a0 && a0[1] && !justAnswered ? null : a0;
+    // 今日复习里的题也按没做过显示（r20）
+    const a0 = S.p.a[q.id], a = S.round ? (S.round.res[q.id] != null ? a0 : null) : ((S.p.f.mode === 'wrong' && a0 && a0[1]) || S.p.f.mode === 'due') && !justAnswered ? null : a0;
     const done = !!a || q.st === 'stop', b = STATUS[q.st];
     let h = `<div class="qhead"><span class="qid num">${esc(q.id)}</span><span class="src">${esc(q.src)}</span><span class="badge ${b[0]}">${b[1]}</span>
       <button class="pos num" type="button" id="posBtn" aria-label="打开题号列表">${S.cur + 1} / ${S.list.length} ${icon('grid', 'style="width:16px;height:16px"')}</button></div>
@@ -977,8 +1180,10 @@
     const ok = i === q.ans;
     const before = stats();
     const v0 = visit, later = (fn, ms) => setTimeout(() => { if (visit === v0 && $('#quiz')) fn(); }, ms);
-    const wasWrong = S.p.wrong.includes(q.id);
+    const wasWrong = S.p.wrong.includes(q.id), wasDue = isDue(S.p, q.id);
     S.p.a[q.id] = [i, ok ? 1 : 0];
+    if (ok) schedRight(S.p, q.id); else schedWrong(S.p, q.id);
+    logDay(S.p, 'n'); if (ok) logDay(S.p, 'r'); if (ok && wasDue) logDay(S.p, 'rv');
     if (S.round) S.round.res[q.id] = ok ? 1 : 0;
     S.p.h.push(ok ? 1 : 0); if (S.p.h.length > 400) S.p.h = S.p.h.slice(-400);
     S.p.streak = ok ? before.streak + 1 : 0;
@@ -988,6 +1193,8 @@
     if (newBest) S.p.best = s.streak;
     save();
     paintQuestion(true);
+    const nDue = dueIds(S.p, S.qMap).length, nd = $('#nDue'); if (nd) nd.textContent = nDue;
+    if (wasDue && !nDue && S.p.f.mode === 'due' && !S.round) later(() => showCheer('📅', '今日复习完成！', '以前错过的题今天又过了一遍，明天见。', 'var(--b)', 'var(--y)', true, '收工 / 接着刷'), 900);
     if (!ok) $(`#quiz .opt[data-i="${i}"]`)?.classList.add('shake');
     paintStats(ok);
     // 对错条
@@ -997,6 +1204,7 @@
     $('#verdictIn').innerHTML = `<div class="head"><i>${head[1] ? `<b>${head[1]}</b>` : icon(ok ? 'check' : 'x')}</i>${head[0]}</div>
       ${lucky ? '<p>这题被你抽中了隐藏的好运 🍀 下一题也会对的。</p>' : ''}${explainHTML(q, ok, false)}
       ${ok && wasWrong ? '<div class="warn" style="color:var(--ok)">这题拿下了 💪 已经移出错题本。</div>' : ''}
+      ${ok && wasDue ? `<div class="warn" style="color:var(--ok)">${S.p.due[q.id] ? `复习过关 📅 ${GAPS[S.p.due[q.id][0]]} 天后再考你一次。` : '这题隔天复习全过了，毕业 🎓'}</div>` : !ok ? '<div class="warn">明天它会出现在“今日复习”里 📅</div>' : ''}
       <button class="btn ${lucky ? 'btn-y' : ok ? 'btn-ok' : 'btn-c'}" type="button" id="goNext" style="width:100%;margin-top:14px">继续</button>`;
     $$('#verdictIn [data-card]').forEach(x => x.onclick = () => goCard(x.dataset.card));
     const v = $('#verdict'); v.className = 'verdict ' + (lucky ? 'lucky' : ok ? 'ok' : 'no');
@@ -1031,6 +1239,56 @@
     sheet.querySelector('.qgrid').onclick = e => { const b = e.target.closest('[data-n]'); if (!b) return; S.cur = +b.dataset.n; closeSheet(); hideVerdict(); paintQuestion(); };
     sheet.querySelector('.cur')?.scrollIntoView({ block: 'center' });
   }
+  // 今日复习（r20）：刷题区切到“今日复习”，范围筛选清空，免得有题被筛掉
+  function startDue() {
+    const n = dueIds(S.p, S.qMap).length;
+    if (!n) { toast('今天没有要复习的错题 🎉', { y: true }); return; }
+    S.round = null;
+    S.p.f = { ch: '', src: '', mode: 'due', stop: false, rand: S.p.f.rand || 0 };
+    setTab(2, false, true);
+    scrollTo({ top: $('#bar').offsetTop, behavior: calm ? 'auto' : 'smooth' });
+    flash($('#quiz'));
+    toast(`今日复习：${n} 道 📅 做完一道少一道。`, { bottom: true });
+  }
+
+  /* ───── 章节弱项表（r20）：按章算做了几道、对了几成；做满 5 道的章才排“最该补” ───── */
+  function chapterStats() {
+    return S.d.chapters.filter(c => !c.appendix).map(c => {
+      const qs = S.d.quiz.filter(q => q.ch === c.id && q.st !== 'stop');
+      const ans = qs.filter(q => S.p.a[q.id]), right = ans.filter(q => S.p.a[q.id][1]).length;
+      return { c, total: qs.length, done: ans.length, right, rate: ans.length ? Math.round(right / ans.length * 100) : null };
+    }).filter(x => x.total);
+  }
+  const rateCls = r => r == null ? 'none' : r < 60 ? 'bad' : r < 80 ? 'mid' : 'good';
+  function showWeak() {
+    const rows = chapterStats();
+    const weak = rows.filter(x => x.done >= 5 && x.rate < 80).sort((a, b) => a.rate - b.rate || b.done - a.done).slice(0, 3);
+    const enough = rows.some(x => x.done >= 5);
+    const rowHTML = x => `<button class="wk-row" type="button" data-ch="${esc(x.c.id)}">
+        <span class="wk-no num">${esc(x.c.id)}</span>
+        <span class="wk-t"><strong>${esc(x.c.title)}</strong><small>${x.done ? `做了 ${x.done} / ${x.total}，对了 ${x.right}` : `${x.total} 道，还没做`}</small>
+          <span class="wk-bar"><i class="${rateCls(x.rate)}" style="width:${x.rate ?? 0}%"></i></span></span>
+        <span class="wk-rate num ${rateCls(x.rate)}">${x.rate == null ? '—' : x.rate + '<em>%</em>'}</span></button>`;
+    openSheet(`<h2 id="sheetTitle">哪几章最弱？📊</h2>
+      <p>${!enough ? '每章做满 5 道才排得出来，先多刷几道再来看 (・ω・)' : weak.length ? '这几章错得最多，先补它们最划算：' : '做过 5 道以上的章正确率都过 80% 了，很稳 😎'}</p>
+      ${weak.length ? `<div class="wk-top">${weak.map(x => `<div class="wk-pick"><span><b>${esc(x.c.id)} ${esc(x.c.title)}</b><small>正确率 ${x.rate}%（${x.done} 道）</small></span>
+        <span class="wk-acts"><button class="btn btn-b sm" type="button" data-ch="${esc(x.c.id)}">刷这章</button><button class="btn btn-ghost sm" type="button" data-chap="${esc(x.c.id)}">看考点</button></span></div>`).join('')}</div>` : ''}
+      <h3 class="grid-part">全部章节<small>　点一章只刷这章</small></h3>
+      <div class="wk-list">${rows.map(rowHTML).join('')}</div>
+      <div class="legend"><span><i style="background:var(--c)"></i>60% 以下</span><span><i style="background:var(--y)"></i>60–79%</span><span><i style="background:var(--ok)"></i>80% 以上</span></div>`);
+    sheet.onclick = e => {
+      const b = e.target.closest('[data-ch],[data-chap]'); if (!b) return;
+      closeSheet();
+      if (b.dataset.chap) { goChapter(b.dataset.chap); return; }
+      S.round = null;
+      S.p.f = { ch: b.dataset.ch, src: '', mode: '', stop: false, rand: S.p.f.rand || 0 };
+      setTab(2, false, true);
+      scrollTo({ top: $('#bar').offsetTop, behavior: calm ? 'auto' : 'smooth' });
+      flash($('#quiz'));
+      toast(`只刷第 ${b.dataset.ch} 章：${S.list.length} 道 ✏️ 换回全部章节在上面的下拉框里。`, { bottom: true, ms: 3600 });
+    };
+  }
+
   function goQuiz(id) {
     const q = S.d.quiz.find(x => x.id === id); if (!q) return;
     const f = S.p.f;
@@ -1075,8 +1333,8 @@
       else if (e.target.closest('[data-got]')) {
         const id = sq.dataset.id, set = new Set(S.p.got), btn = e.target.closest('[data-got]');
         if (set.has(id)) set.delete(id); else set.add(id);
-        S.p.got = [...set]; save();
-        const on = set.has(id); sq.classList.toggle('got', on);
+        S.p.got = [...set];
+        const on = set.has(id); logDay(S.p, 'got', on ? 1 : -1); save(); sq.classList.toggle('got', on);
         btn.className = `btn sm ${on ? 'btn-ok' : 'btn-ghost'}`; btn.textContent = on ? '✓ 背会了' : '我背会了';
         const k = all.filter(x => set.has(x)).length; $('#gotN').textContent = k;
         if (on) {
@@ -1236,12 +1494,13 @@
       const right = E.ans[q.n] === q.ans;
       for (const tok of plain(q.src || '').match(/[A-Z]*\d*-?[A-Z]?\d+(?:-[A-Z]?\d+)?/g) || []) {
         if (!S.qMap[tok] || S.qMap[tok].st === 'stop') continue;
-        if (right) S.p.wrong = S.p.wrong.filter(x => x !== tok); // 模拟卷里做对了，也移出错题本（r16）
-        else if (!S.p.wrong.includes(tok)) { S.p.wrong.push(tok); added++; }
+        if (right) { S.p.wrong = S.p.wrong.filter(x => x !== tok); schedRight(S.p, tok); } // 模拟卷里做对了，也移出错题本（r16）
+        else { schedWrong(S.p, tok); if (!S.p.wrong.includes(tok)) { S.p.wrong.push(tok); added++; } } // 做错的明天进今日复习（r20）
         break;
       }
     }
     E.added = added;
+    logDay(S.p, 'n', 0); S.p.log[dayKey()].ex = [S.p.examLast.score, S.p.examLast.total]; // 收工卡上写一笔（r20）
     save(); store.set(examKey(), strip(E));
     paintExam(); paintStats(false); $('#ebody').scrollTop = 0;
     const pct = total ? Math.round(score / total * 100) : 0;
