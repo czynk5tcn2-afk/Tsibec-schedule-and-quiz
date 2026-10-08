@@ -41,7 +41,7 @@ site/                    ← 整个文件夹就是网站，部署时上传它
   calendar.ics           日历订阅文件，由 make-calendar.js 生成，不要手改
   study.html/.css/.js    复习刷题页
   study-data/*.json      题库数据，由 tools/build-sample.js 生成，不要手改
-  study-img/cry.svg      “整理中”科目的哭哭图
+  study-img/nya-cry.jpg  “整理中”科目的哭哭图（网络表情包）
   icons/                 图标
 make-calendar.js         从 index.html 的课程数据生成 calendar.ics
 tools/build-sample.js    题库源文件 + 生成脚本
@@ -84,7 +84,7 @@ node make-calendar.js --check  # 只检查是不是最新
 - 选择题状态 `st`：`ok` 有依据、`q` 未核实、`warn` 看条件、`stop` 不计分（不计分的题默认隐藏，也不算进进度）。
 - 题号要在全科唯一；考点卡的 `refs`、高频页里出现的题号会自动变成可点的按钮。
 - 主观题 `id` 为空的条目不能标“背会了”，适合放说明文字。
-- 还没整理好的科目写进 `PENDING`，首页显示 `note`，点开出哭哭图。
+- 还没整理好的科目写进 `PENDING`，首页显示 `note`，点开出哭哭图（换图改 `study.js` 开头的 `NYA`）。
 - 题目多的话（上千道）也没问题，每科数据点进该科才加载。
 
 ---
@@ -130,3 +130,7 @@ JS / CSS 的网址带版本号，版本变了浏览器一定会去拿新文件�
 - 复习页：页头色块连点 5 下讲冷笑话、15 下“拆首页”；考点搜索框搜作者名、“必过”、“喵”、“摸鱼”；答对撒纸屑、连对和进度里程碑庆祝；凌晨答题有“夜猫子加成”。
 
 </details>
+
+## 协议
+
+代码按 [MIT 协议](LICENSE) 开源。`site/study-img/nya-cry.jpg` 是网络上的表情包，版权归原作者，不在 MIT 协议范围内；自己用时建议换成自己的图。

@@ -15,7 +15,7 @@
   // ── 改成你自己的 ──
   const AUTHOR = '小克';            // 页面上署名的整理者
   const CONTACT = '告诉整理题目的人'; // 发现问题时找谁
-  const NYA = '/study-img/cry.svg'; // “整理中”科目点开时的哭哭图
+  const NYA = '/study-img/nya-cry.jpg'; // “整理中”科目点开时的哭哭图（网络表情包）
 
   /* ───── 本机存储（失败时静默降级） ───── */
   let storeWarned = false;
@@ -355,7 +355,7 @@
     if (sheet.classList.contains('on')) return;
     const p = (INDEX?.subjects || []).find(x => x.pending && (!name || x.name === name)) || {};
     openSheet(`<h2 id="sheetTitle">${esc(p.name || '还在整理')} 😭</h2>
-      <button class="nya" type="button" id="nya" aria-label="哭哭图，点一下"><img src="${NYA}" alt="哭泣的小团子" width="480" height="464"></button>
+      <button class="nya" type="button" id="nya" aria-label="哭哭图，点一下"><img src="${NYA}" alt="哭泣的粉发小女孩表情包" width="480" height="464"></button>
       <p class="nya-say">${esc(p.note || '还在整理中，等着吧喵')}</p>
       <div class="acts"><button class="btn btn-ghost" type="button" data-close data-focus>好吧，等着 🫡</button></div>`);
     let n = 0;
