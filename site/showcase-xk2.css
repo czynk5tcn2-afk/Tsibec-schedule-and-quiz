@@ -1,0 +1,111 @@
+/* 小克版实验模式样式 · 旧引擎遗留规则已清理，只保留仍在用的宿主元素样式 */
+html.dark-field body.optical-on{--primary:#355dd9;--primary-strong:#2348b8;background:#edf2fa}
+html.dark-field body.optical-on::before,html.dark-field body.optical-on::after{display:none}
+html.dark-field body.optical-on .schedule-shell{border-color:#ccd9ee;box-shadow:0 24px 48px -22px #33579e47,0 0 0 1px #ffffffb3;perspective:1100px}
+html.dark-field body.optical-on .course-visual{box-shadow:inset 0 1px 0 #ffffffe0,0 3px 6px #344f7920;background:linear-gradient(145deg,#ffffff70,transparent 45%),var(--card-bg)}
+html.dark-field body.optical-on .course-visual::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 1px 0 #ffffff90,inset -1px -1px #8199c51a;pointer-events:none;animation:none}
+html.dark-field body.optical-on .schedule-page{transition:none;transform:none;opacity:1}
+html.dark-field body.optical-on .schedule-shell.moving-next .schedule-page:nth-child(2),html.dark-field body.optical-on .schedule-shell.moving-prev .schedule-page:nth-child(2){transform:none;opacity:1}
+html.dark-field body.optical-on .mode-badge{border-color:#c4d3f1;background:linear-gradient(120deg,#fff,#e9f0fc);box-shadow:inset 0 1px #fff;color:#3e5ba1}
+html.dark-field body.optical-on .today-column{background:linear-gradient(180deg,#e5edff,#f1f6ff)}
+html.dark-field body.optical-on .exam-card{border-color:#cbd9ee;background:radial-gradient(ellipse at 50% 37%,#e9f0ff,transparent 65%),#fff;box-shadow:0 25px 55px -25px #335ca047}
+html.dark-field body.optical-on .exam-orb{position:relative;display:inline-grid;place-items:center;width:122px;height:122px;padding:0;border:1px solid #b7cbee70;border-radius:50%;background:radial-gradient(circle at 32% 25%,#ffffff,#e0e6ff55 36%,#81a5f333 64%,#b7c8ef96);box-shadow:inset -8px -12px 24px #708dcb2e,inset 4px 5px 15px #ffffffc9,0 14px 40px #789ad72b;isolation:isolate;animation:none}
+.nebula-core{position:absolute;inset:22%;border-radius:50%;background:radial-gradient(circle at 38% 35%,#fff,#bedcff 14%,#8b91e7 37%,#4855a4 60%,#253e7633 75%,transparent);box-shadow:0 0 24px #8bafff63;animation:nebulaPulse 5s ease-in-out infinite alternate}
+.nebula-ring{position:absolute;inset:7%;border:1px solid #809cdaa6;border-top:2px solid #ffffff;border-radius:50%;transform:rotate(-28deg) scaleY(.35);animation:nebulaOrbit 11s linear infinite}
+.nebula-ring:nth-child(2){inset:-5%;border-color:#bab0e2a6;border-left-color:#fff;animation-duration:17s;animation-direction:reverse}
+.nebula-glint{position:absolute;top:20%;left:26%;width:24%;height:10%;border-radius:50%;background:#ffffffa6;transform:rotate(-35deg)}
+@keyframes nebulaOrbit{from{transform:rotate(-28deg) rotateY(0deg) scaleY(.38)}to{transform:rotate(332deg) rotateY(360deg) scaleY(.38)}}
+@keyframes nebulaPulse{to{transform:rotate(30deg) scale(.9);opacity:.8}}
+html.dark-field body.optical-on .exam-placeholder.scanning::before{animation-duration:1.8s;background:linear-gradient(90deg,transparent,#769cea,#fff,transparent)}
+html.dark-field body.optical-on .exam-orb.orb-tap{animation:none}
+html.dark-field body.optical-on .exam-item{animation-duration:.6s}
+.optical-console{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.optical-action{padding:17px 14px;border:1px solid #e1e8f3;background:linear-gradient(145deg,#fafcff,#eef3fc);border-radius:15px;text-align:left;cursor:pointer;font:inherit;color:#2d4265;min-height:108px}
+.optical-action strong{display:block;font-size:15px;font-weight:650}
+.optical-action small{display:block;margin-top:9px;font-size:12px;color:#7787a2;line-height:1.55}
+.optical-action span{display:block;font-size:12px;color:#8b9abc;margin-bottom:10px;letter-spacing:.1em}
+.optical-action:active{transform:scale(.98)}
+.optical-featured{background:radial-gradient(ellipse at 90% 0,#7166b04f,transparent 70%),#172544;border-color:#384c75;color:#f1f5ff;box-shadow:inset 0 1px #ffffff2b}
+.optical-featured small,.optical-featured span{color:#aabddf}
+.optical-console-exit{grid-column:1/-1;min-height:44px;color:#67758b;background:#f8f9fc}
+.optical-action:disabled{opacity:.5;cursor:default}
+body.optical-paused .nebula-core,body.optical-paused .nebula-ring{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.nebula-core,.nebula-ring{animation:none!important}}
+html.dark-field body.optical-on .exam-card.has-materials{display:flex;flex-direction:column;justify-content:center;gap:26px;padding-bottom:24px}
+.study-materials{width:100%;max-width:560px;padding:18px 20px;border:1px solid #d8e2f3;border-radius:16px;background:linear-gradient(130deg,#f6f9ff,#f0f4fb);text-align:left;box-sizing:border-box}
+.materials-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.materials-heading h3{margin:0;color:#2e4267;font-size:16px;font-weight:700;letter-spacing:.01em}
+.materials-status{padding:4px 9px;border:1px solid #dce5f4;border-radius:7px;background:#fff9;color:#7c8ba4;font-size:12px;white-space:nowrap}
+.study-materials p{margin:12px 0 0;color:#72819b;font-size:14px;line-height:1.75}
+.materials-go{display:flex;align-items:center;justify-content:center;min-height:46px;margin-top:14px;border-radius:12px;background:#2e4267;color:#fff;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:.02em}
+.materials-go:active{transform:translateY(1px);opacity:.9}
+@media(max-width:480px){body.optical-on .exam-card.has-materials{padding-inline:18px;gap:24px}
+.study-materials{padding:16px}}
+html.dark-field body.optical-on{overflow-x:hidden}
+html.dark-field body.optical-on .course-visual{background:linear-gradient(138deg,#ffffffa3,transparent 32%,#c5d0ff25 76%,#ffffff6b),var(--card-bg)}
+html.dark-field body.optical-on #openExamModule,html.dark-field body.optical-on #backToSchedule{border-color:#aebfe9;background:linear-gradient(115deg,#eff6ff,#f3efff 52%,#e9f7f5);box-shadow:inset 0 1px #fff,0 8px 24px -15px #5372c999;color:#364ca2}
+html.dark-field body.optical-on .dialog-card{border-color:#c8d7f1;box-shadow:0 -18px 65px #101d4638,inset 0 1px #fff}
+html.dark-field body.optical-on .study-materials{position:relative;overflow:hidden;border-color:#cfdbef;background:linear-gradient(118deg,#f3f8ff,#f7f3ff 70%,#e9f7f4)}
+html.dark-field body.optical-on .materials-heading h3::before{content:"";display:inline-block;width:12px;height:14px;margin-right:10px;border:1.5px solid #849ed8;border-radius:3px;box-shadow:3px -3px 0 -1px #dce9ff;vertical-align:-1px;transform:rotate(-7deg)}
+.optical-action{position:relative;overflow:hidden;isolation:isolate}
+.optical-action::after{content:"";position:absolute;right:-9px;top:-19px;width:78px;height:78px;border:1px solid #779bdf23;transform:rotate(35deg);z-index:-1}
+.optical-action:focus-visible{outline:3px solid #83acfa;outline-offset:2px}
+html.dark-field body.optical-on{background:transparent;--primary:#B57BFF;--primary-strong:#CFA8FF}
+:root.dark-field body,:root.dark-field{background:var(--bg-field)}
+html.dark-field body.optical-on .schedule-shell,html.dark-field body.optical-on .exam-card{background:var(--surface);border-color:var(--line);
+  box-shadow:0 26px 62px -28px #000000cc,0 0 0 1px #ffffff0d,inset 0 1px 0 #ffffff14;perspective:1100px}
+html.dark-field body.optical-on .schedule{background:var(--surface)}
+html.dark-field body.optical-on .cell{border-color:var(--line-soft)}
+html.dark-field body.optical-on .course-visual{background:linear-gradient(142deg,#ffffff14,transparent 38%,#ffffff08),var(--card-bg);
+  box-shadow:inset 0 0 0 1px var(--card-border),inset 0 1px 0 #ffffff1f}
+html.dark-field body.optical-on .course-visual::after{box-shadow:inset 0 0 0 1px #ffffff14,inset 0 0 14px #b57bff1a;animation:none}
+html.dark-field body.optical-on .course[data-course-name$="实验"] .course-visual{box-shadow:inset 3px 0 0 var(--card-ink),inset 0 0 0 1px var(--card-border)}
+html.dark-field body.optical-on .today-column{background:var(--today)}
+html.dark-field body.optical-on .mode-badge{background:var(--primary-soft);border-color:var(--line);color:var(--primary-strong)}
+html.dark-field body.optical-on #openExamModule,html.dark-field body.optical-on #backToSchedule,html.dark-field body.optical-on .module-switch{background:var(--surface);border-color:var(--line);color:var(--text-soft);box-shadow:var(--shadow-sm)}
+html.dark-field body.optical-on .dialog-card{background:var(--surface);border-color:var(--line);box-shadow:0 -18px 70px #000000a8,inset 0 1px #ffffff14}
+html.dark-field body.optical-on .control-group{background:var(--surface);box-shadow:var(--shadow-sm)}
+html.dark-field body.optical-on .control.secondary{background:var(--surface);border-color:var(--line);color:var(--text)}
+html.dark-field body.optical-on .study-materials{background:var(--surface-soft);border-color:var(--line)}
+html.dark-field body.optical-on .materials-go{background:var(--primary);color:#14101f}
+html.dark-field body.optical-on .materials-heading h3{color:var(--text)}
+html.dark-field body.optical-on .materials-status{background:var(--primary-soft);border-color:var(--line);color:var(--primary-strong)}
+html.dark-field body.optical-on .optical-action[data-fx]{background:var(--surface-soft);border-color:var(--line);color:var(--text)}
+html.dark-field body.optical-on .exam-orb{border-color:var(--line);background:radial-gradient(circle at 32% 25%,#ffffff2e,#b57bff1f 38%,#6d28d91f 66%,#150d2499)}
+.xk-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:block;background:#07060f;transition:opacity .5s ease}
+.xk-canvas.xk-static{background:radial-gradient(ellipse 120% 80% at 50% 20%,#1a1236 0%,#0b0816 60%,#07060f 100%)}
+.xk-canvas.dimmed{opacity:.75}
+body.showcase-exiting .xk-canvas{opacity:0;transition:opacity .45s ease 1.05s}
+body.optical-on{background:transparent!important}
+.xk-canvas.xk-light{background:transparent}
+html.dark-field body.optical-on .schedule-shell,html.dark-field body.optical-on .exam-card{background:rgba(24,16,40,.56);border-color:rgba(160,140,220,.16)}
+html.dark-field body.optical-on .schedule{background:transparent}
+html.dark-field body.optical-on .cell{border-color:rgba(160,140,220,.09)}
+html.dark-field body.optical-on .today-column{background:rgba(120,90,220,.08)}
+@supports (background:color-mix(in srgb,red 50%,transparent)){
+  html.dark-field body.optical-on .course-visual{background:linear-gradient(142deg,#ffffff14,transparent 38%,#ffffff08),color-mix(in srgb,var(--card-bg) 84%,transparent)}
+  html.dark-field body.optical-on .exam-item{background-color:color-mix(in srgb,var(--surface-soft) 78%,transparent)}
+}
+html.dark-field body.optical-on .control-group,html.dark-field body.optical-on #openExamModule,body.optical-on #backToSchedule,body.optical-on .module-switch{background:rgba(26,17,41,.72)}
+body.optical-on::before,body.optical-on::after{display:none}
+.course.xk-zap .course-visual,.exam-item.xk-zap,.exam-orb.xk-zap,.study-materials.xk-zap{animation:xkZap .75s cubic-bezier(.2,.7,.2,1)}
+@keyframes xkZap{
+  0%{box-shadow:0 0 0 1px #5ee6ffd0,0 0 26px #5ee6ff80,inset 0 0 16px #5ee6ff33;filter:brightness(1.35) saturate(1.2)}
+  100%{box-shadow:0 0 0 1px #5ee6ff00,0 0 0 #5ee6ff00,inset 0 0 0 #5ee6ff00;filter:none}
+}
+body.xk-revealing .course .course-visual{transition:opacity .5s ease,transform .6s cubic-bezier(.2,.8,.2,1),filter .6s ease}
+.course.xk-hidden .course-visual{opacity:0;transform:scale(.94);filter:blur(5px)}
+.course.xk-wait .course-visual{opacity:0}
+body.xk-entering .app{pointer-events:none}
+.app.xk-thump{animation:xkThump .16s ease-out}
+@keyframes xkThump{50%{transform:scale(.99)}}
+body.xk-celebrate .dialog{background:rgba(10,5,20,.28);transition:background .3s ease}
+body.optical-on .optical-console-exit{background:var(--surface-soft);color:var(--text-soft);border-color:var(--line)}
+.optical-console .xk-hint{grid-column:1/-1;margin:4px 2px 2px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){
+  .course.xk-zap .course-visual,.exam-item.xk-zap,.app.xk-thump{animation:none}
+  .course.xk-hidden .course-visual,.daily-row.xk-hidden{opacity:1;transform:none;filter:none}
+}
+
+/* r8：实验模式切页转场不可跳过——转场期间的透明挡板（点屏幕只泛起涟漪） */
+.xk-shield{position:fixed;inset:0;z-index:2147483000;background:transparent;touch-action:none;-webkit-tap-highlight-color:transparent;cursor:progress}

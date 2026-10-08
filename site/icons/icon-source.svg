@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Course schedule app icon">
+  <defs>
+    <linearGradient id="bg" x1="34" y1="26" x2="476" y2="492" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8dafdf"/>
+      <stop offset="0.27" stop-color="#547fda"/>
+      <stop offset="0.57" stop-color="#345fd5"/>
+      <stop offset="0.8" stop-color="#284db8"/>
+      <stop offset="1" stop-color="#183790"/>
+    </linearGradient>
+    <radialGradient id="cyanBloom" cx="0" cy="0" r="1" gradientTransform="translate(94 79) rotate(42) scale(249)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c0d6fa" stop-opacity="0.82"/>
+      <stop offset="1" stop-color="#c0d6fa" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pinkBloom" cx="0" cy="0" r="1" gradientTransform="translate(440 401) rotate(-132) scale(256)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a2b8e5" stop-opacity="0.68"/>
+      <stop offset="1" stop-color="#a2b8e5" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="card" x1="124" y1="144" x2="388" y2="372" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eef8ff"/>
+    </linearGradient>
+    <linearGradient id="today" x1="191" y1="166" x2="267" y2="350" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#97c4ff"/>
+      <stop offset="0.52" stop-color="#6b9dec"/>
+      <stop offset="1" stop-color="#497ddd"/>
+    </linearGradient>
+    <linearGradient id="violetSlot" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#6d82bd"/>
+      <stop offset="1" stop-color="#526da8"/>
+    </linearGradient>
+    <linearGradient id="blueSlot" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#238fff"/>
+      <stop offset="1" stop-color="#5865f2"/>
+    </linearGradient>
+    <linearGradient id="pinkSlot" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#df3ae8"/>
+      <stop offset="1" stop-color="#ff559f"/>
+    </linearGradient>
+    <filter id="cardShadow" x="64" y="94" width="384" height="338" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="18" result="shadowBlur"/>
+      <feOffset in="shadowBlur" dy="18" result="shadowOffset"/>
+      <feFlood flood-color="#20106e" flood-opacity="0.32" result="shadowColor"/>
+      <feComposite in="shadowColor" in2="shadowOffset" operator="in" result="shadow"/>
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="edgeBlur"/>
+      <feOffset in="edgeBlur" dy="4" result="edgeOffset"/>
+      <feFlood flood-color="#0f55c7" flood-opacity="0.16" result="edgeColor"/>
+      <feComposite in="edgeColor" in2="edgeOffset" operator="in" result="edgeShadow"/>
+      <feMerge>
+        <feMergeNode in="shadow"/>
+        <feMergeNode in="edgeShadow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="sparkGlow" x="346" y="64" width="96" height="96" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="wideGlow"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="tightGlow"/>
+      <feMerge>
+        <feMergeNode in="wideGlow"/>
+        <feMergeNode in="tightGlow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="gridClip">
+      <rect x="126" y="164" width="260" height="188" rx="24"/>
+    </clipPath>
+  </defs>
+
+  <!-- The background is deliberately square and full-bleed for PWA masking. -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <rect width="512" height="512" fill="url(#cyanBloom)"/>
+  <rect width="512" height="512" fill="url(#pinkBloom)"/>
+
+  <g fill="none" stroke="#ffffff" stroke-linecap="round">
+    <path d="M-54 400C87 332 106 432 232 385C349 341 409 238 574 275" stroke-width="30" opacity="0.08"/>
+    <path d="M-62 128C72 172 122 81 220 104C350 134 407 214 568 154" stroke-width="4" opacity="0.13"/>
+    <circle cx="461" cy="54" r="88" stroke-width="22" opacity="0.08"/>
+    <circle cx="36" cy="477" r="116" stroke-width="5" opacity="0.11"/>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <rect x="104" y="132" width="304" height="248" rx="40" fill="url(#card)"/>
+    <rect x="107" y="135" width="298" height="242" rx="37" fill="none" stroke="#ffffff" stroke-opacity="0.8" stroke-width="3"/>
+  </g>
+
+  <g clip-path="url(#gridClip)">
+    <rect x="126" y="164" width="260" height="188" fill="#e7effb"/>
+    <rect x="128" y="166" width="61" height="184" fill="#f8fbff"/>
+    <rect x="191" y="164" width="65" height="188" fill="url(#today)"/>
+    <rect x="258" y="166" width="61" height="184" fill="#f8fbff"/>
+    <rect x="323" y="166" width="61" height="184" fill="#f8fbff"/>
+
+    <!-- Abstract course blocks; intentionally typeless and text-free. -->
+    <rect x="142" y="180" width="31" height="9" rx="4.5" fill="url(#blueSlot)"/>
+    <rect x="142" y="227" width="24" height="9" rx="4.5" fill="url(#violetSlot)"/>
+    <rect x="143" y="319" width="36" height="9" rx="4.5" fill="url(#pinkSlot)"/>
+
+    <rect x="208" y="180" width="31" height="9" rx="4.5" fill="#ffffff" fill-opacity="0.96"/>
+    <rect x="208" y="227" width="22" height="9" rx="4.5" fill="#ffffff" fill-opacity="0.9"/>
+    <rect x="208" y="274" width="34" height="9" rx="4.5" fill="#ffffff" fill-opacity="0.96"/>
+    <circle cx="212" cy="323" r="6" fill="#ffffff" fill-opacity="0.92"/>
+
+    <rect x="272" y="227" width="31" height="9" rx="4.5" fill="url(#pinkSlot)"/>
+    <rect x="272" y="273" width="24" height="9" rx="4.5" fill="url(#blueSlot)"/>
+    <rect x="337" y="180" width="27" height="9" rx="4.5" fill="url(#violetSlot)"/>
+    <rect x="337" y="319" width="34" height="9" rx="4.5" fill="url(#blueSlot)"/>
+
+    <path d="M191 164V352M256 164V352M321 164V352" stroke="#ffffff" stroke-width="5"/>
+    <path d="M126 211H386M126 258H386M126 305H386" stroke="#ffffff" stroke-width="5"/>
+    <path d="M191 164H256" stroke="#ffffff" stroke-opacity="0.58" stroke-width="5"/>
+  </g>
+  <rect x="126" y="164" width="260" height="188" rx="24" fill="none" stroke="#ffffff" stroke-width="6"/>
+
+  <g filter="url(#sparkGlow)" fill="#ffffff">
+    <path d="M394 90C397 104 402 109 416 112C402 115 397 120 394 134C391 120 386 115 372 112C386 109 391 104 394 90Z"/>
+    <circle cx="414" cy="138" r="4"/>
+    <circle cx="369" cy="95" r="3"/>
+  </g>
+</svg>

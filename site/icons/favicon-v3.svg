@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Course schedule">
+  <defs>
+    <linearGradient id="f-bg" x1="4" y1="3" x2="60" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8dafdf"/>
+      <stop offset="0.28" stop-color="#547fda"/>
+      <stop offset="0.6" stop-color="#7142f1"/>
+      <stop offset="1" stop-color="#183790"/>
+    </linearGradient>
+    <linearGradient id="f-today" x1="24" y1="21" x2="32" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#35efff"/>
+      <stop offset="1" stop-color="#159ae9"/>
+    </linearGradient>
+    <filter id="f-shadow" x="8" y="12" width="48" height="42">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="f-blur"/>
+      <feOffset in="f-blur" dy="2" result="f-offset"/>
+      <feFlood flood-color="#25106e" flood-opacity="0.34" result="f-color"/>
+      <feComposite in="f-color" in2="f-offset" operator="in" result="f-shadow-shape"/>
+      <feMerge>
+        <feMergeNode in="f-shadow-shape"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="64" height="64" fill="url(#f-bg)"/>
+  <circle cx="9" cy="7" r="20" fill="#9af8ff" opacity="0.23"/>
+  <circle cx="57" cy="56" r="23" fill="#ff7bd2" opacity="0.2"/>
+  <rect x="13" y="16.5" width="38" height="31" rx="5" fill="#f8fcff" filter="url(#f-shadow)"/>
+  <g>
+    <rect x="15.75" y="20.5" width="32.5" height="23.5" rx="3" fill="#e7effb"/>
+    <path d="M15.75 20.5H23.875V44H15.75ZM32 20.5H40.125V44H32ZM40.125 20.5H48.25V44H40.125Z" fill="#f9fcff"/>
+    <path d="M23.875 20.5H32V44H23.875Z" fill="url(#f-today)"/>
+    <path d="M23.875 20.5V44M32 20.5V44M40.125 20.5V44M15.75 26.375H48.25M15.75 32.25H48.25M15.75 38.125H48.25" fill="none" stroke="#ffffff" stroke-width="1"/>
+    <rect x="15.75" y="20.5" width="32.5" height="23.5" rx="3" fill="none" stroke="#ffffff" stroke-width="1"/>
+    <path d="M18 23.15H21.5M26 23.15H29.5M34 29.15H37.5M42 41.15H45.5" stroke-linecap="round" stroke-width="1.2" stroke="#7060fa"/>
+    <path d="M26 29.15H29.5M26 35.15H29.5" stroke-linecap="round" stroke-width="1.2" stroke="#ffffff"/>
+  </g>
+  <path d="M49.25 11.25C49.65 13 50.25 13.65 52 14C50.25 14.35 49.65 15 49.25 16.75C48.85 15 48.25 14.35 46.5 14C48.25 13.65 48.85 13 49.25 11.25Z" fill="#ffffff"/>
+</svg>

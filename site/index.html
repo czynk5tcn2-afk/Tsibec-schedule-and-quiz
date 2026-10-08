@@ -1,0 +1,2976 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#f7f4fc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#100a1b" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="本学期课程与考试安排">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="课程表">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/favicon-v3.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-v3.png">
+  <title>课程表</title>
+  <script src="/pwa-v4.js?v=xk17-20261008" defer></script>
+  <style>
+:root{color-scheme: light;
+      --bg: #f4f6fa;
+      --surface: #ffffff;
+      --surface-soft: #f8fbff;
+      --text: #243147;
+      --muted: #78879a;
+      --line: #dce6f1;
+      --primary: #5b87ba;
+      --primary-strong: #3e6faa;
+      --primary-soft: #e4f0fd;
+      --today: #eef6ff;
+      --shadow-sm: 0 5px 16px rgba(60,88,122,.08);
+      --shadow-md: 0 16px 40px rgba(46,70,100,.14);
+      --energy-blue: #79bfff;
+      --energy-cyan: #6ed8dd;
+      --energy-violet: #a98cff;}
+*{box-sizing: border-box;}
+html{-webkit-tap-highlight-color: transparent;}
+body{margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      overscroll-behavior-x: none;}
+body::before{content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0;
+      background:
+        radial-gradient(circle at 13% 9%, rgba(110,216,221,.17), transparent 29%),
+        radial-gradient(circle at 88% 18%, rgba(169,140,255,.14), transparent 31%),
+        radial-gradient(circle at 52% 88%, rgba(121,191,255,.16), transparent 35%);
+      transition: opacity .34s ease;}
+body.showcase-active::before,body.showcase-entering::before{opacity: 1;}
+button{font: inherit; -webkit-appearance: none; appearance: none;}
+button:focus-visible{outline: 3px solid rgba(91,135,186,.28); outline-offset: 2px;}
+.app{position: relative; z-index: 1; width: min(1180px, 100%); margin: 0 auto; padding: 18px;}
+.topbar{display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 13px;}
+.title-wrap{min-width: 0;}
+.title-line{display: flex; align-items: center; gap: 7px;}
+h1{margin: 0; font-size: clamp(23px, 3vw, 34px); letter-spacing: -.045em; line-height: 1.08;}
+.title-trigger{display: inline-block;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      font-weight: inherit;
+      letter-spacing: inherit;
+      line-height: inherit;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+      transition: transform .1s ease;}
+.title-trigger::before,.title-trigger::after{content: attr(data-title);
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;}
+.title-trigger{position: relative;}
+body.showcase-entering .title-trigger::before{color: var(--energy-cyan);
+      opacity: .48;
+      animation: titleChromaticA .42s ease-out both;}
+body.showcase-entering .title-trigger::after{color: var(--energy-violet);
+      opacity: .38;
+      animation: titleChromaticB .42s ease-out both;}
+@keyframes titleChromaticA{ 0%,100% { transform: translate(0); opacity: 0; } 35% { transform: translate(-2px,1px); opacity: .55; } }
+@keyframes titleChromaticB{ 0%,100% { transform: translate(0); opacity: 0; } 42% { transform: translate(2px,-1px); opacity: .45; } }
+.mode-badge{min-height: 27px;
+      border: 1px solid rgba(91,135,186,.28);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(255,255,255,.82);
+      color: var(--primary-strong);
+      box-shadow: 0 4px 12px rgba(61,101,148,.10);
+      font-size: 11px;
+      font-weight: 740;
+      cursor: pointer;
+      white-space: nowrap;
+      animation: modeBadgeIn .34s cubic-bezier(.22,1,.36,1) both;}
+.mode-badge[hidden]{display: none;}
+@keyframes modeBadgeIn{ from { opacity: 0; transform: translateX(-5px) scale(.9); } to { opacity: 1; transform: none; } }
+.title-trigger.title-tap{transform: scale(.96);}
+.title-trigger.title-unlocked{animation: titleUnlock .52s cubic-bezier(.2,.9,.25,1.2) both;}
+@keyframes titleUnlock{
+      0%,100% { transform: translateY(0) rotate(0); }
+      35% { transform: translateY(-4px) rotate(-2deg); }
+      68% { transform: translateY(1px) rotate(1deg); }
+    }
+.status{margin-top: 6px; color: var(--muted); font-size: 13px;}
+.top-actions{display: flex; align-items: center; gap: 7px;}
+.module-stage{position: relative; isolation: isolate;}
+.module{position: relative; z-index: 1;}
+.module.module-behind{position: absolute; inset: 0 0 auto; width: 100%; z-index: 0; pointer-events: none;}
+.controls{display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 11px;}
+.control-group{display: inline-flex;
+      align-items: center;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);}
+.control{min-width: 38px;
+      min-height: 36px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text);
+      padding: 7px 10px;
+      cursor: pointer;
+      transition: transform .15s ease, background-color .18s ease, color .18s ease, opacity .18s ease;}
+.control:active{transform: scale(.95);}
+.control:hover{background: var(--primary-soft);}
+.control:disabled{opacity: .3; cursor: default; transform: none;}
+.control.primary{color: #fff; background: var(--primary); box-shadow: 0 5px 14px rgba(64,111,163,.20);}
+.control.primary.is-current{color: var(--primary-strong); background: var(--primary-soft); box-shadow: none;}
+.control.secondary{color: var(--primary-strong); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-sm);}
+.top-actions .control{min-width: auto; white-space: nowrap;}
+#weekButton,.week-button{min-width: 80px; text-align: center; font-weight: 720;}
+.zoom-label{min-width: 52px; text-align: center; cursor: default; color: var(--muted); font-size: 13px;}
+.zoom-label:hover{background: transparent;}
+.weekline{display: flex;
+      justify-content: center;
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      margin: 0 3px 8px;
+      overflow: hidden;}
+.weekline.is-changing span{animation: weekText .22s ease both;}
+@keyframes weekText{ from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.schedule-shell{position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: var(--shadow-md);
+      touch-action: pan-y pinch-zoom;}
+.schedule-shell.is-overflowing{touch-action: auto;}
+.schedule-track{display: flex;
+      width: 300%;
+      transform: translate3d(-33.333333%,0,0);}
+.schedule-track.is-moving{will-change: transform;}
+.schedule-track.is-animating{transition: transform .28s cubic-bezier(.22,.82,.32,1);}
+.schedule-page{flex: 0 0 33.333333%; min-width: 0; transform-origin: center;}
+.schedule-track.is-moving .schedule-page,body.showcase-active .schedule-page,body.showcase-entering .schedule-page{backface-visibility: hidden;}
+body.showcase-active .schedule-shell{perspective: 900px; border-color: rgba(109,164,218,.62); box-shadow: 0 18px 42px rgba(53,91,132,.16), 0 0 0 1px rgba(169,140,255,.10);}
+body.showcase-active .schedule-page{transition: transform .3s cubic-bezier(.22,.82,.32,1), opacity .3s ease;}
+body.showcase-active .schedule-shell.moving-next .schedule-page:nth-child(2){transform: scale(.988) rotateY(-2.6deg); opacity: .9;}
+body.showcase-active .schedule-shell.moving-prev .schedule-page:nth-child(2){transform: scale(.988) rotateY(2.6deg); opacity: .9;}
+.schedule-page.week-jump-out{animation: weekJumpOut .16s ease-in both;}
+.schedule-page.week-jump-in{animation: weekJumpIn .24s cubic-bezier(.22,1,.36,1) both;}
+@keyframes weekJumpOut{ to { opacity: .18; transform: translateY(4px) scale(.975); } }
+@keyframes weekJumpIn{ from { opacity: .18; transform: translateY(-5px) scale(.975); } to { opacity: 1; transform: none; } }
+.schedule-scroll{width: 100%; overflow: auto; scrollbar-width: thin;}
+.schedule{position: relative;
+      display: grid;
+      grid-template-columns: 52px repeat(5, minmax(0, 1fr));
+      grid-template-rows: 52px repeat(4, minmax(92px, 1fr));
+      min-width: 560px;
+      transform-origin: top left;
+      contain: layout paint style;}
+.cell{position: relative;
+      z-index: 1;
+      min-width: 0;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);}
+.day-head{display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-weight: 740; font-size: 14px;}
+.day-head small{color: var(--muted); font-size: 11px; font-weight: 530;}
+.day-head.today span{color: var(--primary-strong); background: #dcecff; border-radius: 999px; padding: 3px 9px;}
+.period{display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; line-height: 1.2; text-align: center;}
+.today-column{z-index: 0; background: var(--today); pointer-events: none; overflow: hidden;}
+.today-column.scan::after{content: "";
+      position: absolute;
+      inset: -35% 0 auto;
+      height: 30%;
+      background: linear-gradient(180deg, transparent, rgba(144,190,235,.28), transparent);
+      animation: scanToday .65s ease-out both;}
+@keyframes scanToday{ from { transform: translateY(-20%); opacity: 0; } 25% { opacity: 1; } to { transform: translateY(480%); opacity: 0; } }
+.course{z-index: 2;
+      margin: 4px;
+      min-width: 0;
+      border: 0;
+      border-radius: 12px;
+      padding: 0;
+      color: var(--card-ink);
+      background: transparent;
+      cursor: pointer;
+      overflow: visible;
+      text-align: left;
+      position: relative;}
+.course-visual{position: relative;
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      border-radius: inherit;
+      padding: 9px 8px;
+      color: var(--card-ink);
+      background: var(--card-bg);
+      box-shadow: 0 4px 10px rgba(65,88,116,.075);
+      transition: transform .16s ease, box-shadow .16s ease;
+      transform-origin: center;}
+.course:active .course-visual{transform: scale(.97); box-shadow: 0 2px 6px rgba(65,88,116,.08);}
+.course.course-opening .course-visual{animation: coursePress .17s cubic-bezier(.2,.82,.28,1) both;}
+.course.title-wave .course-visual{animation: titleWave .52s cubic-bezier(.2,.85,.28,1.2) both; animation-delay: calc(var(--wave-index, 0) * 52ms);}
+body.showcase-active .course-visual::after{content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.58), inset 0 0 12px rgba(121,191,255,.10);
+      opacity: .75;}
+@keyframes coursePress{ 0%,100% { transform: scale(1); } 48% { transform: scale(.955); } }
+@keyframes titleWave{
+      0%,100% { transform: translateY(0) rotate(0); }
+      38% { transform: translateY(-7px) rotate(-1deg); }
+      70% { transform: translateY(2px) rotate(.5deg); }
+    }
+.course-name{display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-weight: 780;
+      font-size: 14px;
+      line-height: 1.25;}
+.course-place{display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-top: 6px;
+      color: var(--card-ink);
+      font-size: 11px;
+      line-height: 1.25;
+      font-weight: 500;}
+.course.today-course.located .course-visual{animation: todayBounce .46s cubic-bezier(.2,.9,.25,1.2) both;}
+@keyframes todayBounce{ 0%,100% { transform: translateY(0); } 48% { transform: translateY(-4px); } }
+.empty{grid-column: 2 / 7; grid-row: 2 / 6; z-index: 3; display: none; place-items: center; width: 100%; border: 0; background: transparent; padding: 24px; color: var(--muted); text-align: center; pointer-events: none;}
+.empty.current-empty{display: grid;}
+body.showcase-active .schedule-page:nth-child(2) .empty.current-empty{pointer-events: auto; cursor: pointer;}
+.empty-message{animation: floatOnce .65s cubic-bezier(.22,.82,.32,1) both; font-weight: 680;}
+@keyframes floatOnce{ from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+.dialog{position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(32,45,64,.25);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .18s ease, visibility .18s ease;}
+.dialog.open{opacity: 1; visibility: visible; pointer-events: auto;}
+.dialog-card{position: relative;
+      width: min(360px, 86vw);
+      max-height: min(680px, 84vh);
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 21px;
+      background: var(--surface);
+      box-shadow: 0 22px 58px rgba(38,58,84,.22);
+      padding: 24px 21px 20px;
+      transform: translateY(7px) scale(.96);
+      transition: transform .2s cubic-bezier(.2,.82,.28,1);}
+.dialog.open .dialog-card{transform: translateY(0) scale(1);}
+.dialog-accent{position: absolute; inset: 0 0 auto; height: 7px; background: var(--dialog-accent, var(--primary));}
+.dialog-card h2{margin: 0 0 17px; font-size: 23px; line-height: 1.22; letter-spacing: -.025em;}
+.dialog-body{color: var(--text);}
+.dialog-close{width: 100%; margin-top: 21px;}
+.week-grid{display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;}
+.week-option{min-height: 40px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-soft); color: var(--text); font-weight: 660; cursor: pointer;}
+.week-option span,.week-option small{display: block;}
+.week-option small{margin-top: 2px; color: var(--muted); font-size: 9px; font-weight: 560;}
+.week-option.current{color: var(--primary-strong); background: var(--primary-soft);}
+.week-option.selected{border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary);}
+.week-option.targeting{animation: weekTarget .24s cubic-bezier(.22,1,.36,1) both;}
+.dialog-card.week-pop::after{content: "";
+      position: absolute;
+      inset: 7px;
+      border: 1px solid rgba(121,191,255,.24);
+      border-radius: 16px;
+      pointer-events: none;
+      animation: weekRadar .42s ease-out both;}
+@keyframes weekTarget{ 45% { transform: scale(.92); box-shadow: 0 0 0 5px rgba(121,191,255,.16); } }
+@keyframes weekRadar{ from { opacity: 0; transform: scale(.88); } to { opacity: 0; transform: scale(1.05); } }
+.mode-launch{width: 100%;
+      min-height: 42px;
+      margin-top: 17px;
+      border: 1px solid rgba(91,135,186,.30);
+      border-radius: 12px;
+      background: linear-gradient(120deg, rgba(228,240,253,.95), rgba(238,233,255,.88));
+      color: var(--primary-strong);
+      font-weight: 760;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .18s ease;}
+.mode-launch:active{transform: scale(.97);}
+.mode-launch:hover{box-shadow: 0 6px 18px rgba(83,128,178,.14);}
+.pwa-install{width: 100%; min-height: 42px; margin-top: 10px; border: 1px solid var(--line);
+      border-radius: 12px; padding: 9px 12px; background: var(--surface); color: var(--text);
+      text-align: left; cursor: pointer; box-shadow: 0 4px 12px rgba(61,101,148,.07);}
+.pwa-install strong,.pwa-install small{display: block;}
+.pwa-install strong{font-size: 13px;}
+.pwa-install small{margin-top: 3px; color: var(--muted); font-size: 11px;}
+.pwa-install[hidden]{display: none;}
+.install-guide{text-align: center;}
+.install-guide-icon{display: grid; place-items: center; width: 58px; height: 58px; margin: 0 auto 14px; border-radius: 17px; background: linear-gradient(135deg,#34d9f4,#4f6eff 55%,#e243cf); color: #fff; box-shadow: 0 10px 26px rgba(75,102,226,.26); font-size: 26px;}
+.install-guide p{margin: 0; color: var(--muted); font-size: 14px; line-height: 1.75;}
+.pwa-update-toast{position: fixed; z-index: 90; left: 50%; bottom: max(18px, env(safe-area-inset-bottom));
+      display: flex; align-items: center; gap: 10px; width: max-content; max-width: calc(100vw - 28px);
+      border: 1px solid rgba(255,255,255,.78); border-radius: 999px; padding: 8px 9px 8px 14px;
+      background: rgba(35,49,70,.94); color: #fff; box-shadow: 0 14px 38px rgba(25,39,58,.25);
+      font-size: 13px; transform: translate(-50%,24px); opacity: 0; transition: .28s ease;}
+.pwa-update-toast.visible{transform: translate(-50%,0); opacity: 1;}
+.pwa-update-toast button{border: 0; border-radius: 999px; padding: 7px 11px; background: #fff; color: #315f96; font-weight: 750; cursor: pointer;}
+.dialog-card.easter-pop{animation: easterCard .72s cubic-bezier(.18,.9,.26,1.18) both;}
+.dialog-card.easter-pop .dialog-accent{animation: accentPulse .72s ease-out both;}
+.dialog-card.course-pop{animation: courseDialog .26s cubic-bezier(.2,.82,.28,1) both;}
+.dialog-card.course-pop .dialog-accent{transform-origin: center; animation: courseAccent .3s ease-out both;}
+@keyframes easterCard{
+      0% { opacity: 0; transform: translateY(16px) scale(.76) rotate(-3deg); }
+      58% { opacity: 1; transform: translateY(-3px) scale(1.045) rotate(1deg); }
+      78% { transform: translateY(1px) scale(.985) rotate(-.4deg); }
+      100% { transform: translateY(0) scale(1) rotate(0); }
+    }
+@keyframes courseDialog{
+      from { opacity: 0; transform: translateY(8px) scale(.94); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+@keyframes courseAccent{ from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes accentPulse{ 0% { transform: scaleX(0); } 60% { transform: scaleX(1.08); } 100% { transform: scaleX(1); } }
+.module-switch-wrap{display: flex; justify-content: center; margin: 16px 0 3px;}
+.module-switch{display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-width: 180px;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      color: var(--primary-strong);
+      box-shadow: var(--shadow-sm);
+      font-weight: 720;
+      cursor: pointer;
+      transition: transform .15s ease, background-color .18s ease;}
+.module-switch:hover{background: var(--primary-soft);}
+.module-switch:active{transform: scale(.96);}
+.module-switch span{transition: transform .18s ease;}
+.module-switch:hover span{transform: translateX(3px);}
+.exam-card{position: relative;
+      min-height: 460px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 34px 22px;
+      background: var(--surface);
+      box-shadow: var(--shadow-md);
+      text-align: center;}
+.exam-placeholder{max-width: 430px;}
+.exam-orb{display: inline-block; border: 0; padding: 0; background: transparent; font: inherit; font-size: 62px; line-height: 1; cursor: default; animation: oracleArrive .65s cubic-bezier(.2,.88,.28,1.15) both;}
+button.exam-orb{cursor: pointer;}
+.exam-placeholder h2{margin: 17px 0 10px; font-size: 23px;}
+.exam-placeholder p{margin: 0; color: var(--muted); font-size: 15px; line-height: 1.7;}
+.exam-mode-badge{position: absolute; top: 12px; right: 12px; z-index: 3;}
+.exam-content{width: min(620px, 100%); margin: 0 auto; text-align: left;}
+.exam-summary{margin-bottom: 20px; text-align: center;}
+.exam-summary h2{margin: 0 0 8px; font-size: 24px;}
+.exam-summary p{margin: 0; color: var(--muted); line-height: 1.55;}
+.exam-list{position: relative; display: grid; gap: 12px;}
+.exam-list::before{content: ""; position: absolute; left: 17px; top: 15px; bottom: 15px; width: 2px; background: var(--line);}
+.exam-item{position: relative; display: grid; grid-template-columns: 48px 1fr; gap: 12px; border: 1px solid var(--exam-border, var(--line)); border-radius: 14px; padding: 13px 14px 13px 10px; background: var(--exam-bg, var(--surface-soft)); color: var(--exam-ink, var(--text)); font: inherit; text-align: left; overflow: hidden; cursor: default;}
+button.exam-item{cursor: pointer;}
+.exam-date{position: relative; z-index: 1; display: grid; place-items: center; align-self: start; min-height: 42px; border-radius: 10px; background: var(--surface); box-shadow: var(--shadow-sm); font-variant-numeric: tabular-nums;}
+.exam-date strong{display: block; font-size: 17px; line-height: 1;}
+.exam-date small{display: block; margin-top: 3px; color: var(--muted); font-size: 9px;}
+.exam-info strong{display: block; margin-bottom: 5px; font-size: 16px;}
+.exam-info span{display: block; color: var(--muted); font-size: 13px; line-height: 1.55;}
+.exam-note{margin-top: 5px;}
+body.showcase-active .exam-card{border-color: rgba(109,164,218,.55); box-shadow: 0 18px 42px rgba(53,91,132,.15), 0 0 0 1px rgba(169,140,255,.09);}
+body.showcase-active .exam-item{animation: examNodeIn .34s cubic-bezier(.22,1,.36,1) both; animation-delay: var(--exam-delay, 0ms);}
+body.showcase-active .exam-list::before{transform-origin: top; animation: examLineDraw .48s ease-out both;}
+.exam-placeholder.scanning::before{content: "";
+      position: absolute;
+      left: 10%; right: 10%; top: 48%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(121,191,255,.75), transparent);
+      animation: examScan .62s ease-out both;}
+.exam-placeholder.scanning{position: relative;}
+.exam-orb.orb-tap{animation: orbTap .42s cubic-bezier(.22,1,.36,1) both;}
+.exam-item.exam-node-active{animation: examNodePulse .52s cubic-bezier(.22,1,.36,1) both !important;}
+@keyframes examNodeIn{ from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes examLineDraw{ from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes examScan{ from { opacity: 0; transform: translateY(-120px) scaleX(.35); } 35% { opacity: 1; } to { opacity: 0; transform: translateY(120px) scaleX(1); } }
+@keyframes orbTap{ 0%,100% { transform: none; } 25% { transform: translateX(-5px) rotate(-5deg); } 55% { transform: translateX(5px) rotate(5deg); } }
+@keyframes examNodePulse{ 40% { transform: translateY(-3px) scale(1.012); box-shadow: 0 9px 22px rgba(55,91,132,.16); } }
+@keyframes oracleArrive{ from { opacity: 0; transform: translateY(8px) scale(.82) rotate(-8deg); } to { opacity: 1; transform: translateY(0) scale(1) rotate(0); } }
+.calibration-overlay{position: absolute; inset: 0; z-index: 8; pointer-events: none; border: 1px solid rgba(121,191,255,.38); border-radius: inherit; animation: calibrationFade .3s ease-out both;}
+.calibration-overlay::before,.calibration-overlay::after{content: ""; position: absolute; background: linear-gradient(90deg, transparent, rgba(121,191,255,.58), transparent);}
+.calibration-overlay::before{left: 8%; right: 8%; top: 50%; height: 1px;}
+.calibration-overlay::after{top: 8%; bottom: 8%; left: 50%; width: 1px; background: linear-gradient(180deg, transparent, rgba(169,140,255,.52), transparent);}
+@keyframes calibrationFade{ from { opacity: 0; transform: scale(.985); } 45% { opacity: 1; } to { opacity: 0; transform: scale(1); } }
+.empty-message.empty-celebrate{animation: emptyCelebrate .68s cubic-bezier(.22,1,.36,1) both;}
+@keyframes emptyCelebrate{ 25% { transform: translateY(-5px) rotate(-1deg); } 55% { transform: translateY(2px) rotate(1deg); } }
+body.showcase-exiting::before{opacity: 0;}
+body.showcase-entering .app,body.showcase-exiting .app{pointer-events: none;}
+body.showcase-entering .mode-badge,body.showcase-exiting .mode-badge{pointer-events: auto;}
+@media (max-width: 780px){.app{padding: 12px 8px 20px;}
+.topbar{gap: 8px;}
+.title-wrap{min-width: 104px;}
+.top-actions{gap: 5px;}
+.top-actions .control{min-height: 34px; padding: 6px 8px; font-size: 13px;}
+.controls{gap: 6px;}
+.control-group{flex: 0 0 auto; padding: 3px;}
+.control{min-height: 34px; min-width: 34px; padding: 6px 8px; border-radius: 9px;}
+#weekButton,.week-button{min-width: 74px;}
+.zoom-label{min-width: 44px;}
+#fit,.fit-button{min-width: 43px;}
+.weekline{font-size: 12px;}
+.schedule-shell{border-radius: 14px;}
+.schedule{min-width: 100%;
+        grid-template-columns: 34px repeat(5, minmax(0, 1fr));
+        grid-template-rows: 47px repeat(4, 106px);}
+.day-head{font-size: 12px;}
+.day-head small{font-size: 9px;}
+.day-head.today span{padding: 2px 6px;}
+.period{font-size: 10px;}
+.course{margin: 2px; border-radius: 9px;}
+.course-visual{padding: 7px 4px;}
+.course-name{font-size: 11px;}
+.course-place{font-size: 9px; margin-top: 5px;}
+.exam-card{min-height: 430px; border-radius: 14px;}
+.exam-orb{font-size: 54px;}}
+@media (max-width: 380px){.topbar{gap: 5px;}
+.title-wrap{min-width: 92px;}
+.top-actions{gap: 3px;}
+.top-actions .control{padding-inline: 5px; font-size: 11px;}
+.controls{gap: 4px;}
+.control-group{padding: 2px;}
+.control{min-width: 31px; padding-inline: 6px;}
+#weekButton,.week-button{min-width: 68px;}
+.zoom-label{min-width: 40px;}
+#fit,.fit-button{min-width: 39px;}}
+@supports (padding: max(0px)){.app{padding-top: max(18px, env(safe-area-inset-top));
+        padding-right: max(18px, env(safe-area-inset-right));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+        padding-left: max(18px, env(safe-area-inset-left));}
+@media (max-width: 780px){.app{padding-top: max(12px, env(safe-area-inset-top));
+          padding-right: max(8px, env(safe-area-inset-right));
+          padding-bottom: max(20px, env(safe-area-inset-bottom));
+          padding-left: max(8px, env(safe-area-inset-left));}}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important;}}
+:root{color-scheme:light dark;
+  /* 色相锚点：浅深主题共用，深色下只改明度与饱和 */
+  --ch-blue:#2F5BFF;--ch-cyan:#00B6CE;--ch-violet:#7B5BFF;
+  --ch-magenta:#FF3D8B;--ch-amber:#EA9A0B;--ch-emerald:#00B378;
+
+  --bg:#F7F4FC;
+  --bg-field:linear-gradient(168deg,#FDF7FC 0%,#F7F4FC 48%,#EFF3FE 100%);
+  --surface:#FFFFFF;
+  --surface-soft:#FAF7FE;
+  --surface-sunk:#F0EBF9;
+  --text:#241C36;
+  --text-soft:#4A3F66;
+  --muted:#6D6287;
+  --faint:#93899F;
+  --line:#E9E3F3;
+  --line-soft:#F1EDF8;
+  --primary:#7C3AED;
+  --primary-strong:#6425D0;
+  --primary-soft:#F0E7FF;
+  --on-primary:#FFFFFF;
+  --today:#F6F0FF;
+  --shadow-sm:0 2px 6px #4b2a8a12;
+  --shadow-md:0 16px 42px -22px #4b2a8a3d;
+  --scrim:#241c3659;
+  --grip:#DED5EE;
+  --ring:#7C3AED66;}
+@media (prefers-color-scheme:dark){:root{--bg:#100A1B;
+    --bg-field:radial-gradient(ellipse 130% 85% at 50% -12%,#221539 0%,#150D24 46%,#0C0715 100%);
+    --surface:#1A1129;
+    --surface-soft:#20152F;
+    --surface-sunk:#150E22;
+    --text:#EFE7FA;
+    --text-soft:#C3B5D6;
+    --muted:#9A8BB0;
+    --faint:#756890;
+    --line:#2A1E3E;
+    --line-soft:#1F1630;
+    --primary:#B57BFF;
+    --primary-strong:#CFA8FF;
+    --primary-soft:#241635;
+    --on-primary:#12081F;
+    --today:#180F28;
+    --shadow-sm:0 2px 8px #00000066;
+    --shadow-md:0 22px 52px -26px #000000cc;
+    --scrim:#0a0514b8;
+    --grip:#3A2C52;
+    --ring:#B57BFFaa;}}
+:root.dark-field{--bg:#100A1B;
+  --bg-field:radial-gradient(ellipse 130% 85% at 50% -12%,#221539 0%,#150D24 46%,#0C0715 100%);
+  --surface:#1A1129;
+  --surface-soft:#20152F;
+  --surface-sunk:#150E22;
+  --text:#EFE7FA;
+  --text-soft:#C3B5D6;
+  --muted:#9A8BB0;
+  --faint:#756890;
+  --line:#2A1E3E;
+  --line-soft:#1F1630;
+  --primary:#B57BFF;
+  --primary-strong:#CFA8FF;
+  --primary-soft:#241635;
+  --on-primary:#12081F;
+  --today:#180F28;
+  --shadow-sm:0 2px 8px #00000066;
+  --shadow-md:0 22px 52px -26px #000000cc;
+  --scrim:#0a0514b8;
+  --grip:#3A2C52;
+  --ring:#B57BFFaa;}
+html,body{transition:background-color .42s ease,color .42s ease}
+html{background:var(--bg);scrollbar-gutter:stable}
+body{background:var(--bg-field);background-attachment:fixed;color:var(--text);-webkit-font-smoothing:antialiased}
+button{touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--ring);outline-offset:3px}
+[hidden]{display:none!important}
+::selection{background:var(--primary-soft);color:var(--primary-strong)}
+.course,.exam-item{--card-bg:var(--surface-soft);--card-ink:var(--text-soft);--card-border:var(--line)}
+[data-course-name="职业发展与规划"]{--card-bg:#FFEBBF;--card-ink:#B45309;--card-border:#F7DCA0}
+[data-course-name="高等数学"]{--card-bg:#E4D5FF;--card-ink:#6D28D9;--card-border:#D3BEFB}
+[data-course-name="体育课"]{--card-bg:#FFDFC0;--card-ink:#C2410C;--card-border:#F8CBA3}
+[data-course-name="大学英语"]{--card-bg:#C9DCFF;--card-ink:#1D4ED8;--card-border:#AEC8FA}
+[data-course-name="程序设计"]{--card-bg:#FFD4E5;--card-ink:#BE185D;--card-border:#FBB8D2}
+[data-course-name="思想道德与法治"]{--card-bg:#D6DAFF;--card-ink:#4338CA;--card-border:#BFC5FA}
+[data-course-name="心理健康教育"]{--card-bg:#CBEFFA;--card-ink:#0B5F76;--card-border:#A9E1F3}
+[data-course-name="大学物理实验"]{--card-bg:#C8F5DC;--card-ink:#047857;--card-border:#A6EAC6}
+[data-course-name="线性代数"]{--card-bg:#DCF3B8;--card-ink:#3B6309;--card-border:#C6E795}
+[data-course-name="化学实验"]{--card-bg:#BFF3E8;--card-ink:#0F766E;--card-border:#9CE7D8}
+[data-course-name="程序设计实验"]{--card-bg:#F8D3FF;--card-ink:#A21CAF;--card-border:#EFB6FB}
+@media (prefers-color-scheme:dark){.course,.exam-item{--card-bg:#20152F;--card-ink:#B0A0C8;--card-border:#33244A}
+[data-course-name="职业发展与规划"]{--card-bg:#332608;--card-ink:#FFCE5C;--card-border:#4E3A11}
+[data-course-name="高等数学"]{--card-bg:#271152;--card-ink:#BE97FF;--card-border:#3C1D74}
+[data-course-name="体育课"]{--card-bg:#3A1C0B;--card-ink:#FFA35F;--card-border:#552B13}
+[data-course-name="大学英语"]{--card-bg:#13214F;--card-ink:#7FA6FF;--card-border:#1F3372}
+[data-course-name="程序设计"]{--card-bg:#3B0F28;--card-ink:#FF82B4;--card-border:#57183B}
+[data-course-name="思想道德与法治"]{--card-bg:#1A1450;--card-ink:#9AA0FF;--card-border:#282072}
+[data-course-name="心理健康教育"]{--card-bg:#0A2A38;--card-ink:#59D5F0;--card-border:#123F53}
+[data-course-name="大学物理实验"]{--card-bg:#0C2E22;--card-ink:#56DFA8;--card-border:#154434}
+[data-course-name="线性代数"]{--card-bg:#1C2A0B;--card-ink:#B3E063;--card-border:#2B3F13}
+[data-course-name="化学实验"]{--card-bg:#072C26;--card-ink:#4FE0C8;--card-border:#0F443A}
+[data-course-name="程序设计实验"]{--card-bg:#350F3C;--card-ink:#F183FF;--card-border:#4E1959}}
+:root.dark-field .course,:root.dark-field .exam-item{--card-bg:#20152F;--card-ink:#B0A0C8;--card-border:#33244A}
+:root.dark-field [data-course-name="职业发展与规划"]{--card-bg:#332608;--card-ink:#FFCE5C;--card-border:#4E3A11}
+:root.dark-field [data-course-name="高等数学"]{--card-bg:#271152;--card-ink:#BE97FF;--card-border:#3C1D74}
+:root.dark-field [data-course-name="体育课"]{--card-bg:#3A1C0B;--card-ink:#FFA35F;--card-border:#552B13}
+:root.dark-field [data-course-name="大学英语"]{--card-bg:#13214F;--card-ink:#7FA6FF;--card-border:#1F3372}
+:root.dark-field [data-course-name="程序设计"]{--card-bg:#3B0F28;--card-ink:#FF82B4;--card-border:#57183B}
+:root.dark-field [data-course-name="思想道德与法治"]{--card-bg:#1A1450;--card-ink:#9AA0FF;--card-border:#282072}
+:root.dark-field [data-course-name="心理健康教育"]{--card-bg:#0A2A38;--card-ink:#59D5F0;--card-border:#123F53}
+:root.dark-field [data-course-name="大学物理实验"]{--card-bg:#0C2E22;--card-ink:#56DFA8;--card-border:#154434}
+:root.dark-field [data-course-name="线性代数"]{--card-bg:#1C2A0B;--card-ink:#B3E063;--card-border:#2B3F13}
+:root.dark-field [data-course-name="化学实验"]{--card-bg:#072C26;--card-ink:#4FE0C8;--card-border:#0F443A}
+:root.dark-field [data-course-name="程序设计实验"]{--card-bg:#350F3C;--card-ink:#F183FF;--card-border:#4E1959}
+.app{width:min(780px,100%);padding:32px 24px max(28px,env(safe-area-inset-bottom));isolation:isolate}
+.topbar{align-items:center;gap:12px;margin-bottom:26px}
+.title-wrap{min-width:0}
+.title-line{gap:9px;flex-wrap:wrap}
+.semester-label{font-size:11px;color:var(--faint);letter-spacing:.14em;margin-bottom:8px;font-weight:650}
+h1{font-size:32px;font-weight:780;letter-spacing:-.055em;line-height:1.15;color:var(--text)}
+.status{font-size:12px;line-height:1.5;margin-top:9px;color:var(--muted)}
+.top-actions{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
+.top-actions .control{min-height:42px;padding:9px 12px;font-size:13px;border-radius:13px}
+.control{background:transparent;border:0;box-shadow:none;color:var(--text);min-height:42px;border-radius:11px;transition:background .18s,transform .18s}
+.control:hover{background:var(--surface-sunk)}
+.control.primary{background:var(--primary);color:var(--on-primary);border:0;box-shadow:0 5px 14px #2f5bff2e}
+.control.secondary{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-sm);color:var(--text)}
+.control:active{transform:scale(.96)}
+#today{color:var(--primary-strong);background:transparent;box-shadow:none;padding-inline:6px}
+#settingsButton{min-width:42px;padding:10px;color:var(--muted)}
+#settingsButton svg{width:19px;height:19px;display:block}
+.controls{display:flex;justify-content:flex-start;align-items:center;gap:10px;margin-bottom:14px}
+.control-group{border:0;padding:3px;background:var(--surface);border-radius:15px;box-shadow:var(--shadow-sm);gap:0}
+.control-group[aria-label="缩放"]{display:none}
+.week-button{min-width:92px;font-size:15px;font-weight:750;font-variant-numeric:tabular-nums}
+#prev,#next{min-width:40px;font-size:17px;color:var(--muted)}
+.weekline{display:flex;justify-content:space-between;align-items:center;margin:0 3px 13px;font-size:12px;color:var(--muted)}
+.weekline::after{content:"左右滑动切周";font-size:11px;color:var(--faint)}
+.schedule-shell{border:1px solid var(--line);border-radius:21px;background:var(--surface);box-shadow:var(--shadow-md);overflow:hidden}
+.schedule{min-width:100%;grid-template-columns:38px repeat(5,minmax(0,1fr));grid-template-rows:64px repeat(4,minmax(114px,1fr));background:var(--surface);contain:layout paint style}
+.cell{border-color:var(--line-soft)}
+.day-head{font-size:13px;gap:6px;font-weight:650;color:var(--text)}
+.day-head small{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.day-head.today span{background:var(--primary);color:var(--on-primary);border-radius:8px;padding:4px 7px}
+.day-head.today small{color:var(--primary-strong)}
+.period{font-size:11px;font-weight:600;color:var(--faint);line-height:1.7;font-variant-numeric:tabular-nums}
+.today-column{background:var(--today)}
+.course{margin:5px 3px;border-radius:11px}
+.course-visual{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px 7px 10px;border:0;background:var(--card-bg);box-shadow:inset 0 1px #ffffffa6;transition:transform .18s;overflow:hidden}
+@media (prefers-color-scheme:dark){.course-visual{box-shadow:inset 0 1px #ffffff12,inset 0 0 0 1px var(--card-border)}}
+.course[data-course-name$="实验"] .course-visual{box-shadow:inset 3px 0 0 var(--card-ink),inset 0 1px #ffffffa6}
+@media (prefers-color-scheme:dark){.course[data-course-name$="实验"] .course-visual{box-shadow:inset 3px 0 0 var(--card-ink),inset 0 0 0 1px var(--card-border)}}
+.course-name{font-size:14px;line-height:1.45;font-weight:720;letter-spacing:0;-webkit-line-clamp:3;overflow-wrap:anywhere;color:var(--card-ink)}
+.course-place{display:block;margin-top:auto;font-size:11px;line-height:1.5;color:var(--card-ink);opacity:.78;overflow-wrap:anywhere}
+.course:active .course-visual{box-shadow:inset 0 1px #ffffffa6}
+.schedule-track.is-animating{transition-duration:.32s;transition-timing-function:cubic-bezier(.22,.72,.22,1)}
+.schedule-page:not(:nth-child(2)) .course-visual::before,.schedule-page:not(:nth-child(2)) .today-column{animation-play-state:paused!important}
+.schedule-track.is-moving .schedule-page .course-visual::before{animation-play-state:running!important}
+.empty-message{font-size:15px;font-weight:550;color:var(--muted);animation:none}
+.empty{background:var(--surface-soft);border-radius:14px;margin:12px;width:auto;padding:20px}
+.module-switch-wrap{margin-top:18px}
+.module-switch{width:100%;justify-content:space-between;min-height:58px;padding:16px 20px;border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow-sm);font-size:14px;background:var(--surface);color:var(--text-soft);font-weight:650}
+.module-switch:hover{background:var(--surface-soft)}
+.module-switch span{color:var(--faint)}
+.mode-badge{font-size:10px;min-height:28px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--primary-soft);color:var(--primary-strong);box-shadow:none;animation:none}
+.exam-card{border:1px solid var(--line);border-radius:22px;min-height:500px;background:radial-gradient(ellipse at 50% 32%,var(--primary-soft),transparent 58%),var(--surface);box-shadow:var(--shadow-md);padding:48px 24px;color:var(--text)}
+.exam-placeholder{width:100%;max-width:360px}
+.exam-placeholder h2{font-size:22px;letter-spacing:-.03em;line-height:1.45;margin-top:24px;color:var(--text)}
+.exam-placeholder p{font-size:14px;max-width:250px;margin:0 auto;line-height:1.9;color:var(--muted)}
+.exam-orb{font-size:68px;padding:18px;animation:none}
+.exam-summary{text-align:left;margin:0 0 28px}
+.exam-summary h2{font-size:26px;letter-spacing:-.04em;color:var(--text)}
+.exam-summary p{font-size:13px;color:var(--muted)}
+.exam-list{gap:13px}
+.exam-list::before{display:none}
+.exam-item{background:var(--card-bg);border:1px solid var(--card-border);grid-template-columns:65px 1fr;padding:17px 13px;gap:15px;color:var(--card-ink);border-radius:15px}
+.exam-date{background:transparent;box-shadow:none;gap:5px;color:var(--card-ink)}
+.exam-date strong{font-size:29px;font-weight:650;font-variant-numeric:tabular-nums}
+.exam-date small{font-size:11px;white-space:nowrap;color:var(--card-ink);opacity:.72}
+.exam-info strong{font-size:16px}
+.exam-info span{font-size:13px;color:var(--card-ink);opacity:.8}
+.dialog{align-items:end;justify-items:center;padding:0;background:var(--scrim);transition:opacity .24s,visibility .24s;z-index:50}
+.dialog-card{width:min(560px,100%);max-height:88vh;max-height:88dvh;border:1px solid var(--line);border-bottom:0;border-radius:27px 27px 0 0;padding:0 24px max(24px,env(safe-area-inset-bottom));background:var(--surface);color:var(--text);box-shadow:0 -16px 70px #1020301f;transform:translateY(42px);transition:transform .28s cubic-bezier(.2,.8,.2,1);overscroll-behavior:contain;scrollbar-width:thin}
+.dialog.open .dialog-card{transform:translateY(0)}
+.dialog-accent{height:2px;left:26%;right:26%;border-radius:50%;opacity:.45}
+.sheet-grip{display:block;position:relative;width:100%;height:36px;border:0;background:transparent;touch-action:none;cursor:grab}
+.sheet-grip::after{content:"";display:block;width:32px;height:4px;background:var(--grip);border-radius:5px;margin:auto}
+.dialog-card h2{font-size:24px;line-height:1.35;letter-spacing:-.04em;margin:4px 0 23px}
+.dialog-card.easter-pop,.dialog-card.course-pop,.dialog-card.week-pop{animation:none}
+.dialog-close{margin-top:24px;min-height:47px;border-radius:14px}
+.next-course-note{margin-top:18px!important;padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--surface-soft);text-align:left;font-size:13px!important;color:var(--text-soft)!important}
+.next-course-note strong{display:block;color:var(--text);margin-top:4px;font-size:14px;font-weight:600}
+.mode-launch{border:1px solid var(--line);background:var(--primary-soft);color:var(--primary-strong);min-height:46px;font-size:14px;font-weight:650}
+.pwa-install{box-shadow:none;border-color:var(--line);padding:13px;background:var(--surface-soft);color:var(--text)}
+.pwa-install strong{font-size:14px}
+.pwa-install small{font-size:12px;color:var(--muted)}
+.week-grid{gap:8px}
+.week-option{min-height:53px;border:0;font-size:14px;background:var(--surface-soft);color:var(--text);font-variant-numeric:tabular-nums}
+.week-option small{font-size:10px;color:var(--muted)}
+.week-option.current{background:var(--primary-soft);color:var(--primary-strong)}
+.week-option.selected{background:var(--primary);color:var(--on-primary);box-shadow:none}
+.week-option.selected small{color:var(--on-primary);opacity:.75}
+.pref-section{padding:16px 0;border-bottom:1px solid var(--line-soft)}
+.pref-section:first-child{padding-top:0}
+.pref-label{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--text-soft);margin-bottom:13px}
+.pref-actions{display:flex;gap:7px}
+.pref-actions button{flex:1;border:1px solid var(--line);border-radius:11px;padding:11px 8px;min-height:44px;background:var(--surface-soft);color:var(--text);font:inherit;font-size:14px;cursor:pointer}
+.pref-actions button[aria-pressed="true"]{background:var(--primary-soft);border-color:var(--primary);color:var(--primary-strong)}
+.install-guide p{color:var(--muted)}
+.pwa-update-toast{/* 放顶部：底部会压进 Safari 浮动地址栏的触控区，点击被浏览器吃掉 */
+  top:max(12px,env(safe-area-inset-top));bottom:auto;
+  z-index:120;min-height:48px;gap:12px;padding:6px 6px 6px 16px;
+  border:1px solid transparent;border-radius:999px;
+  background:var(--text);color:var(--bg);font:inherit;font-size:14px;font-weight:600;
+  box-shadow:0 12px 34px -10px #241c3666;cursor:pointer;
+  transform:translate(-50%,-140%);opacity:0;
+  transition:transform .32s cubic-bezier(.2,.8,.2,1),opacity .24s ease;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.pwa-update-toast.visible{transform:translate(-50%,0);opacity:1}
+.pwa-update-toast:active{transform:translate(-50%,0) scale(.97)}
+.pwa-update-action{display:inline-grid;place-items:center;min-height:36px;padding:0 16px;border-radius:999px;
+  background:var(--primary);color:var(--on-primary);font-weight:700}
+.pwa-update-toast.busy{cursor:progress}
+.pwa-update-toast.busy .pwa-update-action{opacity:.55}
+.pwa-update-toast:focus-visible{outline:3px solid var(--ring);outline-offset:3px}
+@media (min-width:781px){.dialog{place-items:center;padding:24px}
+.dialog-card{border:1px solid var(--line);border-radius:24px;padding-bottom:24px}
+.sheet-grip{height:30px}
+.course-name{font-size:15px}
+.course-place{font-size:12px}}
+@media (max-width:780px){.app{padding:max(22px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(25px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+.topbar{gap:7px;margin-bottom:22px}
+.title-wrap{min-width:0}
+h1{font-size:29px}
+.top-actions .control{padding:9px 10px;min-height:42px;font-size:13px}
+#today{font-size:12px;padding-inline:4px}
+.schedule{grid-template-columns:29px repeat(5,minmax(0,1fr));grid-template-rows:60px repeat(4,minmax(108px,1fr))}
+.course{margin:4px 2px;border-radius:9px}
+.course-visual{padding:11px 5px 9px;gap:7px}
+.course-name{font-size:13px;line-height:1.5;letter-spacing:-.025em}
+.course-place{font-size:11px;line-height:1.4}
+.day-head{font-size:12px}
+.day-head small{font-size:10px}
+.period{font-size:10px}
+.controls{gap:8px}
+.week-button{min-width:82px}
+.exam-card{min-height:485px;padding:45px 20px}
+.dialog-card{padding-inline:22px}
+.module-switch-wrap{margin-top:16px}}
+@media (max-width:359px){.app{padding-inline:8px}
+.topbar{gap:4px}
+h1{font-size:26px}
+.top-actions{gap:3px}
+.top-actions .control{padding-inline:8px}
+.semester-label{font-size:10px;letter-spacing:.06em}
+.status{font-size:11px}
+.schedule{grid-template-columns:25px repeat(5,minmax(0,1fr))}
+.course-visual{padding-inline:4px}
+.course-name{font-size:12px}
+.course-place{font-size:10px}}
+@media (prefers-reduced-motion:reduce){.dialog-card{transition:none}}
+.schedule-track.is-animating{transition:none!important}
+.schedule.has-weekend{grid-template-columns:38px repeat(7,minmax(0,1fr))}
+@media (max-width:780px){.schedule.has-weekend{min-width:calc(140% - 12px);grid-template-columns:29px repeat(7,minmax(0,1fr))}}
+@media (max-width:359px){.schedule.has-weekend{grid-template-columns:25px repeat(7,minmax(0,1fr))}}
+
+/* ════════════ 小克版 r3 · 普通模式美化 ════════════ */
+/* 周次导航独占一行（日览已删除） */
+.controls .control-group[aria-label="周次切换"]{flex:1;justify-content:space-between}
+.controls .week-button{flex:1}
+.control.at-edge{opacity:.38}
+#today.is-current{opacity:.55}
+body.no-swipe-hint .weekline::after{content:none}
+.semester-label{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.semester-label:focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:4px}
+.today-column.nudge{animation:todayNudge .6s cubic-bezier(.3,1.5,.5,1)}
+@keyframes todayNudge{35%{transform:translateY(-5px)}70%{transform:translateY(1px)}}
+
+/* 课程卡：四个字的课名只在正中间断行 */
+.course-name{word-break:keep-all;overflow-wrap:normal}
+
+/* 弹窗：遮罩毛玻璃，面板带回弹（下方用实色阴影补上回弹时露出的缝） */
+.dialog{-webkit-backdrop-filter:blur(6px) saturate(1.15);backdrop-filter:blur(6px) saturate(1.15)}
+html.dark-field body.optical-on .dialog{-webkit-backdrop-filter:none;backdrop-filter:none}
+.dialog-card{transition:transform .52s cubic-bezier(.22,1.28,.36,1);box-shadow:0 -16px 70px #1020301f,0 80px 0 0 var(--surface)}
+.dialog-card:is([data-kind="course"],[data-kind="settings"],[data-kind="week"],[data-kind="install"],[data-kind="semester"]) .dialog-close{background:var(--surface-sunk);color:var(--text-soft);border:1px solid var(--line);box-shadow:none;font-weight:600}
+
+/* 课程详情 */
+:where(.dialog-card[data-kind="course"]){--card-bg:var(--surface-soft);--card-ink:var(--primary-strong);--card-border:var(--line)}
+.dialog-card[data-kind="course"],html.dark-field body.optical-on .dialog-card[data-kind="course"]{background:linear-gradient(180deg,var(--card-bg) 0,var(--surface) 230px)}
+@supports (background:color-mix(in srgb,red 50%,transparent)){
+  .dialog-card[data-kind="course"],html.dark-field body.optical-on .dialog-card[data-kind="course"]{background:linear-gradient(180deg,color-mix(in srgb,var(--card-bg) 94%,var(--surface)) 0,var(--surface) 230px)}
+}
+.dialog-card[data-kind="course"] .dialog-accent{display:none}
+.dialog-card[data-kind="course"] h2{color:var(--card-ink);font-size:28px;margin:6px 0 16px}
+.cd{display:grid;gap:12px}
+.cd-hero{padding:15px 16px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--card-border);box-shadow:0 10px 24px -18px var(--card-ink)}
+.cd-when{font-size:23px;font-weight:720;letter-spacing:-.02em;color:var(--text);font-variant-numeric:tabular-nums}
+.cd-sub{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
+.cd-rel{padding:3px 10px;border-radius:999px;background:var(--card-ink);color:var(--surface);font-weight:650;font-size:12px}
+.cd-rel.past{background:var(--surface-sunk);color:var(--muted)}
+.cd-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.cd-label{font-size:12.5px;color:var(--muted);flex:none}
+.cd-place{padding:4px 2px}
+.cd-where{text-align:right}
+.cd-bld{font-size:13.5px;color:var(--text-soft);margin-right:7px}
+.cd-room{font-size:21px;font-weight:720;color:var(--card-ink);letter-spacing:.01em;font-variant-numeric:tabular-nums}
+.cd-weeks{padding:12px 2px 2px;border-top:1px solid var(--line-soft)}
+.cd-weektext{font-size:13.5px;color:var(--text);text-align:right}
+.cd-strip{display:grid;grid-template-columns:repeat(var(--n,20),1fr);gap:3px;margin-top:10px}
+.cd-strip i{height:14px;border-radius:4px;background:var(--surface-sunk)}
+.cd-strip i.on{background:var(--card-ink)}
+.cd-strip i.on.past{opacity:.32}
+.cd-strip i.cur{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--text)}
+.cd-axis{display:flex;justify-content:space-between;margin-top:5px;font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.cd-stat{appearance:none;border:0;background:none;padding:6px 0 0;font:inherit;font-size:12.5px;color:var(--muted);cursor:pointer;text-align:left}
+.cd-stat.quip{color:var(--card-ink);font-weight:600}
+.cd-others{padding-top:12px;border-top:1px solid var(--line-soft)}
+.cd-others ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.cd-others li{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:9px 12px;border-radius:12px;background:var(--surface-soft)}
+.cd-others li strong{font-weight:620;color:var(--text)}
+.cd-others li span{color:var(--muted);text-align:right}
+
+/* “点我”心情卡 */
+.mood{display:grid;justify-items:center;text-align:center;gap:14px;padding:2px 0 4px}
+.mood-hero{appearance:none;border:0;cursor:pointer;width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:var(--surface-soft);box-shadow:0 14px 30px -14px var(--tone);animation:moodFloat 3.4s ease-in-out infinite;-webkit-tap-highlight-color:transparent}
+@supports (background:color-mix(in srgb,red 50%,transparent)){.mood-hero{background:radial-gradient(circle at 34% 28%,#ffffffb0,transparent 58%),color-mix(in srgb,var(--tone) 24%,var(--surface))}}
+.mood-emoji{font-size:50px;line-height:1}
+.mood-hero.boing{animation:moodBoing .55s cubic-bezier(.3,1.6,.4,1)}
+@keyframes moodFloat{50%{transform:translateY(-4px)}}
+@keyframes moodBoing{0%{transform:scale(.78) rotate(-10deg)}60%{transform:scale(1.12) rotate(5deg)}100%{transform:none}}
+.mood-line{margin:0;font-size:15.5px;line-height:1.7;color:var(--text-soft);max-width:22em;min-height:3.4em}
+.mood-today{width:100%;text-align:left;border:1px solid var(--line);border-radius:16px;padding:12px;background:var(--surface-soft)}
+.mood-head{display:flex;justify-content:space-between;align-items:baseline;padding:0 2px;margin-bottom:9px;font-size:13px;color:var(--muted)}
+.mood-head small{font-size:12px;color:var(--faint)}
+.mood-today ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.mood-today li{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:var(--card-bg,var(--surface));color:var(--card-ink,var(--text))}
+.mood-today li b{font-size:12px;font-weight:650;font-variant-numeric:tabular-nums;opacity:.8}
+.mood-today li strong{font-size:15px;font-weight:650}
+.mood-today li span{font-size:12px;opacity:.85}
+.mood .next-course-note,.mood .mode-launch{width:100%;margin:0!important}
+
+/* 学期进度 */
+.sem{display:grid;gap:12px;--card-ink:var(--primary)}
+.sem-big{display:flex;align-items:baseline;gap:10px}
+.sem-big strong{font-size:48px;font-weight:760;letter-spacing:-.04em;color:var(--primary-strong);font-variant-numeric:tabular-nums}
+.sem-big span{font-size:13px;color:var(--muted)}
+.sem-facts{margin:2px 0 0;font-size:14px;color:var(--text-soft);line-height:1.7}
+.sem-quip{margin:0;font-size:14px;color:var(--muted)}
+
+/* 周次选择：已经过去的周变淡 */
+.week-option.past{opacity:.5}
+
+/* 轻提示 */
+.toast{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom,0px));z-index:70;max-width:min(88vw,420px);padding:11px 16px;border-radius:14px;background:var(--text);color:var(--surface);font-size:13.5px;line-height:1.5;text-align:center;box-shadow:0 12px 30px -12px #0007;pointer-events:none;opacity:0;transform:translate(-50%,18px);transition:opacity .25s ease,transform .4s cubic-bezier(.2,1.3,.4,1)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.mood-hero,.mood-hero.boing,.today-column.nudge{animation:none}.dialog-card{transition:none}.toast{transition:opacity .2s}}
+
+/* ════════════ 小克版 r5 · 细节打磨 ════════════ */
+/* 可读性：节次、日期、教室号原来是 10px 浅灰，对比度不到 4.5:1 */
+.period{color:var(--muted)}
+.semester-label{color:var(--muted);padding-block:6px;margin-block:-6px 2px}
+.course-place{opacity:.92}
+@media (max-width:480px){.period{font-size:11px}.day-head small{font-size:10.5px}.course-place{font-size:10.5px}}
+/* 本周：今天的课描边，已过去日子的课变淡 */
+.course.is-past .course-visual{opacity:.58;filter:saturate(.7)}
+.course.is-today .course-visual{box-shadow:inset 0 0 0 2px var(--card-ink),inset 0 1px #ffffffa6}
+html.dark-field body.optical-on .course.is-today .course-visual{box-shadow:inset 0 0 0 2px var(--card-ink),0 0 18px -6px var(--card-ink)}
+/* 触控：去掉双击缩放的等待，长按不弹出选字菜单 */
+button,[role="button"],.course{touch-action:manipulation}
+.course,.control,.module-switch,.mode-badge,.title,h1,.semester-label,.week-option{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.pref-version{margin:14px 0 0;text-align:center;font-size:11.5px;color:var(--faint);letter-spacing:.04em}
+/* ════════════ 小克版 r9 · 作息时间 ════════════ */
+/* 左栏：节次 + 上下课时间 */
+.period{flex-direction:column;gap:1px;line-height:1.3}
+.period b{font-weight:700;margin-bottom:4px}
+.period small{font-size:10px;font-weight:550;letter-spacing:-.03em;color:var(--muted)}
+@media (max-width:780px){.schedule{grid-template-columns:33px repeat(5,minmax(0,1fr))}.schedule.has-weekend{grid-template-columns:33px repeat(7,minmax(0,1fr))}}
+@media (max-width:359px){.schedule{grid-template-columns:30px repeat(5,minmax(0,1fr))}.schedule.has-weekend{grid-template-columns:30px repeat(7,minmax(0,1fr))}.period small{font-size:9.5px}}
+/* 顶部提示条：上课中 / 下一节 / 下次有课（静态，每分钟换一次字） */
+.now-strip{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;width:100%;min-height:46px;margin:-8px 0 12px;padding:10px 14px;border:0;border-radius:15px;background:var(--surface);box-shadow:var(--shadow-sm);color:var(--text);font:inherit;text-align:left;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.now-strip[hidden]{display:none}
+.now-strip:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.now-tag{flex:none;padding:3px 9px;border-radius:999px;background:var(--surface-sunk);color:var(--text);font-size:12px;font-weight:700}
+.now-strip[data-mode="live"] .now-tag{background:var(--primary);color:var(--on-primary)}
+.now-main{flex:1 1 auto;min-width:0;font-size:14px;font-weight:650;font-variant-numeric:tabular-nums}
+.now-sub{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.now-sub:empty{display:none}
+.now-strip[data-mode="live"]::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:calc(var(--p,0) * 100%);background:var(--primary);opacity:.55}
+html.dark-field body.optical-on .now-strip{background:rgba(26,17,41,.72)}
+@media (max-width:359px){.now-strip{padding:9px 11px;gap:4px 8px}.now-main{font-size:13px}.now-sub{font-size:11.5px}}
+/* 本周：正在上的课反色；今天已下课的课和以前的课一样变淡 */
+.course.is-now .course-visual,html.dark-field body.optical-on .course.is-now .course-visual{background:var(--card-ink);box-shadow:0 4px 14px -6px var(--card-ink)}
+.course.is-now .course-name,.course.is-now .course-place{color:var(--card-bg)}
+.course.is-done .course-visual{opacity:.58;filter:saturate(.7)}
+/* 课程详情：午休提示 */
+.cd-lunch{margin-top:8px;font-size:12.5px;color:var(--muted)}
+/* 心情卡：时间小字；今日课程里正在上的描边、已上完的变淡 */
+.mood-hint{margin:0;padding:6px 12px;border-radius:999px;background:var(--surface-soft);color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.mood-today li.now{box-shadow:inset 0 0 0 2px var(--card-ink,var(--primary))}
+.mood-today li.done{opacity:.55}
+/* ════════════ 小克版 r10 · 考试倒数、日历订阅 ════════════ */
+.exam-info .exam-countdown{display:inline-block;margin-top:7px;padding:2px 9px;border-radius:999px;background:var(--card-ink);color:var(--card-bg);font-size:12px;font-weight:700;opacity:1;font-variant-numeric:tabular-nums}
+.exam-item.is-next{box-shadow:inset 0 0 0 2px var(--card-ink)}
+.exam-item.is-over{opacity:.55;filter:saturate(.7)}
+.exam-item.is-over .exam-countdown{background:transparent;color:var(--card-ink);padding-inline:0}
+.cal-sheet{display:grid;gap:14px;font-size:14px;line-height:1.6;color:var(--text-soft,var(--text))}
+.cal-sheet p{margin:0}
+.cal-sheet h3{margin:4px 0 0;font-size:15px;color:var(--text)}
+.cal-sheet ol{margin:0;padding-left:20px;display:grid;gap:4px}
+.cal-sheet small{color:var(--muted);font-size:12.5px;line-height:1.55}
+.cal-primary{display:flex;align-items:center;justify-content:center;min-height:46px;padding:10px 16px;border:0;border-radius:14px;background:var(--primary);color:var(--on-primary);font:inherit;font-weight:700;text-decoration:none;cursor:pointer}
+.cal-secondary{display:flex;align-items:center;justify-content:center;min-height:44px;padding:9px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);font:inherit;font-weight:650;text-decoration:none;cursor:pointer}
+.cal-url{width:100%;min-height:42px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-soft);color:var(--text);font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
+.pref-calendar{margin-top:10px}
+/* ════════════ 小克版 r11 · 找回“点我”图标的进场动画（第四次优化版的 easterHero / freeHero） ════════════ */
+.dialog-card.easter-pop .mood-hero{animation:easterHero .78s ease-out both,moodFloat 3.4s ease-in-out .78s infinite}
+.dialog-card.free-pop .mood-hero{animation:freeHero .9s ease-out both,moodFloat 3.4s ease-in-out .9s infinite}
+.dialog-card.easter-pop .mood-hero.boing{animation:moodBoing .55s cubic-bezier(.3,1.6,.4,1)}
+@keyframes easterHero{0%{opacity:0;transform:translateY(10px) scale(.5) rotate(-16deg)}55%{opacity:1;transform:translateY(-7px) scale(1.16) rotate(8deg)}78%{transform:translateY(2px) scale(.96) rotate(-3deg)}100%{transform:none}}
+@keyframes freeHero{0%{opacity:0;transform:translateY(12px) scale(.48) rotate(-12deg)}48%{opacity:1;transform:translateY(-9px) scale(1.2) rotate(9deg)}70%{transform:translateY(3px) scale(.94) rotate(-4deg)}86%{transform:translateY(-2px) scale(1.04) rotate(2deg)}100%{transform:none}}
+/* 同样的弹出也用在普通模式另外两个图标上：考试页水晶球（等切页滑入后再弹）、没课那周的 🥳 */
+.exam-placeholder div.exam-orb{display:inline-block;animation:easterHero .78s ease-out .24s both}
+.empty-emoji{display:inline-block;animation:easterHero .78s ease-out .1s both}
+@media (prefers-reduced-motion:reduce){.dialog-card.easter-pop .mood-hero,.dialog-card.free-pop .mood-hero,.dialog-card.easter-pop .mood-hero.boing,.exam-placeholder div.exam-orb,.empty-emoji{animation:none}}
+</style>
+</head>
+<body>
+  <main class="app">
+    <div class="module-stage" id="moduleStage">
+    <section class="module course-module" id="courseModule" aria-label="课程表模块">
+    <header class="topbar">
+      <div class="title-wrap">
+        <div class="semester-label" id="semesterLabel" role="button" tabindex="0" aria-label="查看学期进度">2026 秋季学期</div>
+        <div class="title-line">
+          <h1><button type="button" class="title-trigger" id="titleTrigger" data-title="课程表" draggable="false" aria-label="课程表，连续点击可触发彩蛋">课程表</button></h1>
+          <button type="button" class="mode-badge" id="courseModeBadge" aria-label="退出实验模式" hidden>✦ 实验中</button>
+        </div>
+        <div class="status" id="status"></div>
+      </div>
+      <div class="top-actions">
+        <button class="control primary" id="today">回到今天</button>
+        <button class="control secondary" id="dailyMood">点我</button>
+        <button class="control" id="settingsButton" aria-label="显示与体验"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--bg)"/><circle cx="15" cy="17" r="3" fill="var(--bg)"/></svg></button>
+      </div>
+    </header>
+    <button type="button" class="now-strip" id="nowStrip" hidden><span class="now-tag"></span><span class="now-main"></span><span class="now-sub"></span></button>
+    <div class="controls">
+      <div class="control-group" aria-label="周次切换">
+        <button class="control" id="prev" aria-label="上一周">←</button>
+        <button class="control week-button" id="weekButton" aria-label="选择周次">第1周</button>
+        <button class="control" id="next" aria-label="下一周">→</button>
+      </div>
+      <div class="control-group" aria-label="缩放">
+        <button class="control" id="zoomOut" aria-label="缩小">－</button>
+        <span class="control zoom-label" id="zoomLabel">100%</span>
+        <button class="control" id="zoomIn" aria-label="放大">＋</button>
+        <button class="control fit-button" id="fit" aria-label="将课表缩放复位到100%">复位</button>
+      </div>
+    </div>
+    <div class="weekline">
+      <span id="weekRange"></span>
+    </div>
+    <p id="weekendHint" hidden style="margin:0 2px 12px;color:#687993;font-size:12px;line-height:1.6">本周有周末课程；横向滑动查看，使用上方箭头切周。</p>
+    <div class="schedule-shell" id="scheduleShell">
+      <div class="schedule-track" id="scheduleTrack">
+        <div class="schedule-page"><div class="schedule-scroll"><section class="schedule" aria-label="上一周课程表"></section></div></div>
+        <div class="schedule-page"><div class="schedule-scroll"><section class="schedule" aria-label="当前周课程表"></section></div></div>
+        <div class="schedule-page"><div class="schedule-scroll"><section class="schedule" aria-label="下一周课程表"></section></div></div>
+      </div>
+    </div>
+    <div class="module-switch-wrap">
+      <button type="button" class="module-switch" id="openExamModule">考试安排 <span aria-hidden="true">→</span></button>
+    </div>
+    </section>
+
+    <section class="module exam-module" id="examModule" aria-label="考试安排" aria-hidden="true" hidden>
+      <div class="exam-card" id="examCard">
+        <button type="button" class="mode-badge exam-mode-badge" id="examModeBadge" aria-label="退出实验模式" hidden>✦ 实验中</button>
+        <div class="exam-placeholder">
+          <div class="exam-orb" aria-hidden="true">🔮</div>
+          <h2>考试安排尚未现身</h2>
+          <p>还未获取到具体日期，待老夫掐指一算</p>
+        </div>
+      </div>
+      <div class="module-switch-wrap">
+        <button type="button" class="module-switch" id="backToSchedule"><span aria-hidden="true">←</span> 返回课程表</button>
+      </div>
+    </section>
+    </div>
+  </main>
+
+  <div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" aria-hidden="true">
+    <div class="dialog-card" id="dialogCard">
+      <button type="button" class="sheet-grip" aria-label="向下拖动或点击关闭"></button>
+      <div class="dialog-accent" id="dialogAccent" aria-hidden="true"></div>
+      <h2 id="dialogTitle"></h2>
+      <div class="dialog-body" id="dialogBody"></div>
+      <button class="control primary dialog-close" id="dialogClose">关闭</button>
+    </div>
+  </div>
+
+  <script>
+    const SEMESTER = { firstWeekStartDate: "2026-08-24", totalWeeks: 20 };
+    // 资源版本号：发版时与 sw.js 的 V、上方 pwa-v4.js 的 ?v= 一起改。
+    const ASSET_V = "xk17-20261008";
+
+    // 作息时间（北京时间）：第 N 节 = CLASS_TIMES[N-1] = [上课, 下课]。
+    // 第 9–10 节在晚上，目前没有课，课表上不显示这一行；以后有晚课再加。
+    const CLASS_TIMES = [
+      ["08:30","09:10"],["09:15","09:55"],["10:15","10:55"],["11:00","11:40"],
+      ["13:40","14:20"],["14:25","15:05"],["15:15","15:55"],["16:00","16:40"],
+      ["17:30","18:10"],["18:15","18:55"]
+    ];
+
+    // 示例课程（全部是虚构的）。每行：[课程名, 地点, 星期(1–7), 起始节, 结束节, 周次, 颜色]
+    // 周次写法："1-16"、"1-8,10"、"3-15(单)"、"4-16(双)"。同一门课不同时段分多行。
+    const COURSES = [
+      ["高等数学","教学楼A101",1,1,2,"1-16","#A855F7"],
+      ["大学英语","教学楼B203",1,3,4,"1-16","#4F7DFF"],
+      ["体育课","体育馆",1,5,6,"1-16","#EE7F2D"],
+      ["线性代数","教学楼A101",2,1,2,"1-8","#12B76A"],
+      ["程序设计","实验楼C305",2,3,4,"1-16","#F43F5E"],
+      ["思想道德与法治","教学楼B105",2,5,6,"1-12","#6366F1"],
+      ["高等数学","教学楼A101",3,1,2,"1-16","#A855F7"],
+      ["心理健康教育","教学楼B105",3,3,4,"2-9","#0EA5E9"],
+      ["大学物理实验","实验楼D201",3,5,8,"3-15(单)","#16A34A"],
+      ["大学英语","教学楼B203",4,1,2,"1-16","#4F7DFF"],
+      ["线性代数","教学楼A101",4,3,4,"9-16","#12B76A"],
+      ["程序设计实验","实验楼C305",4,5,8,"4-16(双)","#D946EF"],
+      ["职业发展与规划","教学楼B105",5,1,2,"5-10","#F59E0B"],
+      ["化学实验","实验楼D110",5,3,4,"5-12","#14B8A6"],
+      ["程序设计","实验楼C305",5,5,6,"1-16","#F43F5E"]
+    ];
+
+    // 有考试安排时，只需在这里录入。数组为空会保留“待老夫掐指一算”的原占位文案。
+    // 考试安排：{ course, date:"YYYY-MM-DD", time, place, note }。数组为空时考试页显示占位文案。
+    const EXAMS = [
+      { course:"高等数学", date:"2026-12-28", time:"09:00—11:00", place:"教学楼A101", note:"带计算器" },
+      { course:"大学英语", date:"2027-01-04", time:"14:00—16:00", place:"教学楼B203", note:"" }
+    ];
+
+    // 演示模式：打开时自动把“这周”当成第 7 周，考试排在两三周后，任何时候打开都有内容可看。
+    // 自己用时改成 false，并把上面 SEMESTER 的日期改成开学第一周的周一、EXAMS 改成真实考试。
+    const DEMO_MODE = true;
+    if (DEMO_MODE) {
+      const t = new Date(Date.now() + 8 * 3600000), dow = t.getUTCDay() || 7;
+      const day = n => new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate() + n)).toISOString().slice(0, 10);
+      SEMESTER.firstWeekStartDate = day(-(dow - 1) - 42);
+      EXAMS[0].date = day(9); EXAMS[1].date = day(16);
+    }
+
+    const days = ["周一","周二","周三","周四","周五","周六","周日"];
+    function hasWeekendCourses(week) { return coursesFor(week).some(course => course[2] >= 6); }
+    function visibleDaysFor(week) { return days.slice(0,hasWeekendCourses(week)?7:5); }
+    const periods = [[1,2],[3,4],[5,6],[7,8]];
+    const palettes = {
+      "职业发展与规划": { bg:"#FBF0DB", ink:"#8A5B12", border:"#F0DDB6" },
+      "高等数学": { bg:"#EFE9FC", ink:"#5B3FB0", border:"#DCCFF7" },
+      "体育课": { bg:"#FCEADE", ink:"#9A4E1C", border:"#F5D2B8" },
+      "大学英语": { bg:"#E4EDFD", ink:"#24509C", border:"#C6DAF8" },
+      "程序设计": { bg:"#FCE7EE", ink:"#9C2F53", border:"#F7C9D8" },
+      "思想道德与法治": { bg:"#E9EBFB", ink:"#3F459C", border:"#D1D5F4" },
+      "心理健康教育": { bg:"#DEF1F6", ink:"#14657A", border:"#BEE3EC" },
+      "大学物理实验": { bg:"#E3F3E7", ink:"#256B3C", border:"#C3E4CD" },
+      "线性代数": { bg:"#E7F3DE", ink:"#4A6E28", border:"#CDE5BC" },
+      "化学实验": { bg:"#DEF2EE", ink:"#146B60", border:"#BCE3DC" },
+      "程序设计实验": { bg:"#F6E6F8", ink:"#7B2E85", border:"#E9C8EE" }
+    };
+    const fallbackPalette = { bg:"#E9EEF6", ink:"#42526E", border:"#E1E7F1" };
+    const firstMonday = new Date(SEMESTER.firstWeekStartDate + "T00:00:00");
+    let now = beijingNow();
+    now.setHours(0,0,0,0);
+    const msDay = 86400000;
+    let currentWeek = weekAt(now);
+    let currentWeekInSemester = currentWeek >= 1 && currentWeek <= SEMESTER.totalWeeks;
+    const CENTER = -33.333333;
+    const PREVIOUS = 0;
+    const NEXT = -66.666667;
+
+    let selectedWeek = Math.min(SEMESTER.totalWeeks, Math.max(1, currentWeek));
+    let storedZoom = 1;
+    try { storedZoom = Number(localStorage.getItem("publicScheduleZoom")) || 1; } catch (_) {}
+    let zoom = Math.min(1.4, Math.max(.7, storedZoom));
+    let lastFocused = null;
+    let suppressClickUntil = 0;
+    let drag = null;
+    let queuedGesture = null;
+    let isAnimating = false;
+    let pendingTarget = null;
+    let pendingOptions = {};
+    let queuedTarget = null;
+    let queuedOptions = {};
+    let finishTimer = null;
+    let navAnimation=null,navSerial=0,navQueueFrame=0;
+    let courseOpenTimer=null,courseOpenTicket=0,courseOpenTrigger=null;
+    let finishActiveModule=null;
+    let pendingEaster = null;
+    let titleTapTimes = [];
+    let longTitleTapTimes = [];
+    let moduleTransitioning = false;
+    let courseModuleHeight = 0;
+    let renderEpoch = 0;
+    let farJumping = false;
+    let autoEasterTimer = null;
+    let dialogKind = "standard";
+    let dialogClosing = false;
+    let examRendered = false;
+    let orbTapTimes = [];
+    let emptyTapTimes = [];
+    let todayScanAt = 0;
+    let weekChoiceTimer = null;
+    let pendingEasterTimer = null;
+    let resizeTimer = null;
+    let layoutWidth=window.innerWidth;
+    let dateRefreshTimer = null;
+
+    const SHOWCASE = {
+      phase: "off",
+      runId: 0,
+      timers: new Set(),
+      animations: new Set(),
+      owned: new Set(),
+      canvas: null,
+      context: null,
+      nodes: [],
+      raf: 0,
+      wakeUntil: 0,
+      lastFrame: 0,
+      abort: null,
+      majorUntil: 0,
+      pendingExit: false,
+      assetsPromise: null
+    };
+
+    const appRoot = document.querySelector(".app");
+    const moduleStage = document.getElementById("moduleStage");
+    const courseModule = document.getElementById("courseModule");
+    const examModule = document.getElementById("examModule");
+    const shell = document.getElementById("scheduleShell");
+    const track = document.getElementById("scheduleTrack");
+    const pages = Array.from(document.querySelectorAll(".schedule-page"));
+    const scrollAreas = pages.map(page => page.querySelector(".schedule-scroll"));
+    const roots = pages.map(page => page.querySelector(".schedule"));
+    const todayButton = document.getElementById("today");
+    const dailyMoodButton = document.getElementById("dailyMood");
+    const titleTrigger = document.getElementById("titleTrigger");
+    const weekButton = document.getElementById("weekButton");
+    const courseModeBadge = document.getElementById("courseModeBadge");
+    const examModeBadge = document.getElementById("examModeBadge");
+    const examCard = document.getElementById("examCard");
+    const dialog = document.getElementById("dialog");
+    const dialogCard = document.getElementById("dialogCard");
+    const dialogTitle = document.getElementById("dialogTitle");
+    const dialogBody = document.getElementById("dialogBody");
+    const dialogClose = document.getElementById("dialogClose");
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let reduceMotion = motionQuery.matches;
+    let dialogFocusTimer = 0;
+
+    function clampWeek(week) { return Math.min(SEMESTER.totalWeeks, Math.max(1, Number(week))); }
+    function mondayOf(week) {
+      const date = new Date(firstMonday);
+      date.setDate(date.getDate() + (week - 1) * 7);
+      return date;
+    }
+    function fmt(date) { return `${date.getMonth()+1}/${date.getDate()}`; }
+    function fullDate(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`; }
+    function humanDate(date, withYear = false) {
+      return `${withYear ? `${date.getFullYear()}年` : ""}${date.getMonth()+1}月${date.getDate()}日`;
+    }
+    function weekdayText(date) { return ["周日","周一","周二","周三","周四","周五","周六"][date.getDay()]; }
+    function active(spec, week) {
+      return spec.split(",").some(raw => {
+        const match = raw.trim().match(/^(\d+)(?:-(\d+))?(?:\((单|双)\))?$/);
+        if (!match) return false;
+        const start = Number(match[1]);
+        const end = Number(match[2] || match[1]);
+        const parity = match[3];
+        return week >= start && week <= end && (!parity || (parity === "单" ? week % 2 === 1 : week % 2 === 0));
+      });
+    }
+    const courseWeekCache = new Map();
+    function coursesFor(week) {
+      if (!courseWeekCache.has(week)) courseWeekCache.set(week, COURSES.filter(course => active(course[5], week)));
+      return courseWeekCache.get(week);
+    }
+    // 课程卡上的地点简写：“教学楼A101”→“A101”，“实验楼C305”→“C305”；按自己学校的写法改这里
+    function shortPlace(place) {
+      if (!place) return "未标注";
+      const room = place.match(/([A-Z]\d{2,4})$/);
+      return room ? room[1] : place;
+    }
+    function formatWeeks(spec) {
+      return spec.split(",").map(raw => {
+        const item = raw.trim();
+        const parity = item.includes("(单)") ? "（单周）" : item.includes("(双)") ? "（双周）" : "";
+        return `第${item.replace(/\((单|双)\)/, "")}周${parity}`;
+      }).join("、");
+    }
+    function dateForCourse(week, course) {
+      const date = mondayOf(week);
+      date.setDate(date.getDate() + course[2] - 1);
+      return date;
+    }
+    /* ── 作息时间（r9）──────────────────────────────────────
+       时间都按“当天第几分钟”算；“现在”一律用 beijingNow()。 */
+    function minutesOf(hhmm) { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; }
+    function clockText(hhmm) { return hhmm.replace(/^0/, ""); }
+    function courseSpan(course) {
+      const from = CLASS_TIMES[course[3]-1][0], to = CLASS_TIMES[course[4]-1][1];
+      // 跨上午、下午的课（实验课）中间有午休
+      const lunch = course[3] <= 4 && course[4] >= 5 ? { from: minutesOf(CLASS_TIMES[3][1]), to: minutesOf(CLASS_TIMES[4][0]), text: `${clockText(CLASS_TIMES[3][1])}–${clockText(CLASS_TIMES[4][0])}`, resume: clockText(CLASS_TIMES[4][0]) } : null;
+      return { start: minutesOf(from), end: minutesOf(to), from: clockText(from), to: clockText(to), lunch };
+    }
+    function minuteOfDay(clock) { return clock.getHours() * 60 + clock.getMinutes(); }
+    function durationText(minutes) {
+      if (minutes < 60) return `${Math.max(1, minutes)} 分钟`;
+      const h = Math.floor(minutes / 60), m = minutes % 60;
+      if (h < 24) return m ? `${h} 小时 ${m} 分钟` : `${h} 小时`;
+      const d = Math.floor(h / 24), rest = h % 24;
+      return d >= 7 || !rest ? `${d} 天` : `${d} 天 ${rest} 小时`;
+    }
+    // 某一刻的上课状态：今天的课（带时间）、正在上的、下一节
+    function classStateAt(clock) {
+      const day = new Date(clock); day.setHours(0,0,0,0);
+      const t = minuteOfDay(clock);
+      const items = coursesAt(day).map(course => ({ course, ...courseSpan(course) }));
+      const current = items.find(item => t >= item.start && t < item.end) || null;
+      const next = items.find(item => item.start > t) || null;
+      const inLunch = !!(current?.lunch && t >= current.lunch.from && t < current.lunch.to);
+      return { day, t, items, current, next, inLunch, ended: items.length > 0 && t >= items[items.length-1].end };
+    }
+    function setModuleInteractive(module, interactive) {
+      if ("inert" in module) module.inert = !interactive;
+      module.querySelectorAll("button, a, input, select, textarea, [tabindex]").forEach(element => {
+        if (!interactive) {
+          if (!element.hasAttribute("data-old-tabindex")) element.setAttribute("data-old-tabindex", element.getAttribute("tabindex") ?? "");
+          element.setAttribute("tabindex", "-1");
+        } else if (element.hasAttribute("data-old-tabindex")) {
+          const oldValue = element.getAttribute("data-old-tabindex");
+          element.removeAttribute("data-old-tabindex");
+          if (oldValue === "") element.removeAttribute("tabindex");
+          else element.setAttribute("tabindex", oldValue);
+        }
+      });
+    }
+    function syncPageAccessibility() {
+      pages.forEach((page, index) => {
+        const activePage = index === 1;
+        page.setAttribute("aria-hidden", activePage ? "false" : "true");
+        if ("inert" in page) page.inert = !activePage;
+        page.querySelectorAll("button, a, input, select, textarea, [tabindex]").forEach(element => {
+          if (!activePage) element.setAttribute("tabindex", "-1");
+          else if (element.getAttribute("tabindex") === "-1") element.removeAttribute("tabindex");
+        });
+      });
+    }
+    function syncShowcaseControls() {
+      roots.forEach((root, index) => root.querySelectorAll(".empty.current-empty").forEach(empty => {
+        const interactive = isShowcaseOn() && index === 1;
+        if (interactive) {
+          empty.setAttribute("role", "button");
+          empty.setAttribute("tabindex", "0");
+        } else {
+          empty.removeAttribute("role");
+          empty.removeAttribute("tabindex");
+        }
+      }));
+    }
+    function ensureShowcaseAssets() {
+      if (window.ScheduleShowcaseEngine && document.getElementById("showcase-pro-style")?.sheet) return Promise.resolve(window.ScheduleShowcaseEngine);
+      if (SHOWCASE.assetsPromise) return SHOWCASE.assetsPromise;
+      const resource = (id,tag,url) => new Promise((resolve,reject) => {
+        const existing=document.getElementById(id);
+        if(tag==="link" ? existing?.sheet : window.ScheduleShowcaseEngine){resolve();return;}
+        const node=existing||document.createElement(tag);let settled=false;
+        const finish=error=>{
+          if(settled)return;settled=true;clearTimeout(timeout);
+          node.removeEventListener("load",loaded);node.removeEventListener("error",failed);
+          error?reject(error):resolve();
+        };
+        const loaded=()=>finish(),failed=()=>finish(new Error("实验资源加载失败"));
+        const timeout=setTimeout(()=>finish(new Error("实验资源加载超时，请重试")),12000);
+        node.id=id;
+        node.addEventListener("load",loaded);node.addEventListener("error",failed);
+        if(!existing){
+          if(tag==="link"){node.rel="stylesheet";node.href=url;}
+          else{node.src=url;node.async=true;}
+          document.head.append(node);
+        }
+      });
+      SHOWCASE.assetsPromise=Promise.all([
+        resource("showcase-pro-style","link","/showcase-xk2.css?v="+ASSET_V),
+        resource("showcase-pro-script","script","/showcase-xk2.js?v="+ASSET_V)
+      ]).then(()=>{
+        if(!window.ScheduleShowcaseEngine)throw new Error("实验引擎未就绪");
+        return window.ScheduleShowcaseEngine;
+      }).catch(error=>{
+        const style=document.getElementById("showcase-pro-style");if(!style?.sheet)style?.remove();
+        if(!window.ScheduleShowcaseEngine)document.getElementById("showcase-pro-script")?.remove();
+        throw error;
+      }).finally(()=>{SHOWCASE.assetsPromise=null;});
+      return SHOWCASE.assetsPromise;
+    }
+    function setTrack(percent, offset = 0) {
+      track.style.transform = offset
+        ? `translate3d(calc(${percent}% + ${offset}px),0,0)`
+        : `translate3d(${percent}%,0,0)`;
+    }
+    function openDialog({ title, body, accent = "#5B87BA", kind = "standard", closeLabel = "关闭", trigger = document.activeElement, initialFocus = null, focusDelay = null, courseName = null }) {
+      cancelPendingCourse();
+      clearTimeout(dialogFocusTimer);
+      sheetOpened();
+      lastFocused = trigger;
+      dialogKind = kind;
+      dialogClosing = false;
+      dialogTitle.textContent = title;
+      dialogBody.replaceChildren(body);
+      dialogClose.textContent = closeLabel;
+      document.getElementById("dialogAccent").style.setProperty("--dialog-accent", accent);
+      dialogCard.classList.remove("easter-pop", "free-pop", "course-pop", "week-pop");
+      dialogCard.dataset.kind = kind;
+      if (courseName) dialogCard.dataset.courseName = courseName; else delete dialogCard.dataset.courseName;
+      if (kind === "easter" || kind === "free-easter") {
+        void dialogCard.offsetWidth;
+        dialogCard.classList.add("easter-pop");
+        if (kind === "free-easter") dialogCard.classList.add("free-pop");
+      } else if (kind === "course") {
+        void dialogCard.offsetWidth;
+        dialogCard.classList.add("course-pop");
+      } else if (kind === "week" && isShowcaseOn()) {
+        void dialogCard.offsetWidth;
+        dialogCard.classList.add("week-pop");
+      }
+      dialog.classList.add("open");
+      dialog.setAttribute("aria-hidden", "false");
+      if ("inert" in appRoot) appRoot.inert = true;
+      document.body.style.overflow = "hidden";
+      if (isShowcaseOn()) {
+        if (window.ScheduleShowcaseEngine?.isRunning?.()) {window.ScheduleShowcaseEngine.setModal(true);window.ScheduleShowcaseEngine.panel?.(dialogCard,kind);}
+        else pauseShowcaseCanvas();
+      }
+      const focusTarget = initialFocus || dialogClose;
+      const delay = focusDelay ?? (reduceMotion ? 0 : 180);
+      const focusTicket=sheetTicket;
+      dialogFocusTimer=setTimeout(() => {if(focusTicket===sheetTicket && focusTarget.isConnected && dialog.classList.contains("open") && !dialogClosing) focusTarget.focus({preventScroll:true});},delay);
+    }
+    function finishDialogClose(resumePending = true) {
+      clearTimeout(dialogFocusTimer);
+      clearTimeout(weekChoiceTimer);
+      weekChoiceTimer = null;
+      dialog.classList.remove("open");
+      dialog.setAttribute("aria-hidden", "true");
+      if ("inert" in appRoot) appRoot.inert = false;
+      document.body.style.overflow = "";
+      dialogCard.style.visibility = "";
+      if (lastFocused && document.contains(lastFocused)) lastFocused.focus();
+      dialogClosing = false;
+      dialogKind = "standard";
+      if (isShowcaseOn()) {
+        window.ScheduleShowcaseEngine?.setModal?.(false);
+        window.ScheduleShowcaseEngine?.resume?.();
+        wakeShowcaseCanvas(900);
+      }
+      sheetClosed();
+    }
+    function closeDialog(resumePending = true) {
+      if (!dialog.classList.contains("open") || dialogClosing) return;
+      dialogClosing = true;
+      dialogCard.style.transform="";dialogCard.style.visibility="";
+      finishDialogClose(resumePending);
+    }
+    /* ── 课程详情 ───────────────────────────────────────────
+       头部用课程色；时间是主角；周次画成一排格子；列出同一门课的其他时段。 */
+    function todayStart() { const t = beijingNow(); t.setHours(0,0,0,0); return t; }
+    function relativeDay(date) {
+      const diff = Math.round((calendarDay(date) - calendarDay(todayStart())) / msDay);
+      if (diff === 0) return "今天";
+      if (diff === 1) return "明天";
+      if (diff === 2) return "后天";
+      if (diff === -1) return "昨天";
+      return diff > 0 ? `${diff} 天后` : `${-diff} 天前`;
+    }
+    // 课程详情顶部的小标签：上课中 / 还有多久 / 已下课
+    function courseCountdown(date, span) {
+      const clock = beijingNow();
+      const sameDay = calendarDay(date) === calendarDay(clock);
+      const t = minuteOfDay(clock);
+      if (sameDay && t >= span.start && t < span.end) {
+        if (span.lunch && t >= span.lunch.from && t < span.lunch.to) return `午休中 · ${span.lunch.resume} 继续`;
+        return `上课中 · 还有 ${durationText(span.end - t)}`;
+      }
+      if (sameDay && t >= span.end) return "已下课";
+      const dayDiff = Math.round((calendarDay(date) - calendarDay(clock)) / msDay);
+      if (dayDiff < 0) return relativeDay(date);
+      return `还有 ${durationText(dayDiff * 1440 + span.start - t)}`;
+    }
+    function splitPlace(place) {
+      const m = (place || "").match(/^(.*?)([A-Z]?\d{2,4})$/);
+      return m && m[1] ? [m[1], m[2]] : ["", place || "未标注"];
+    }
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text != null) node.textContent = text;
+      return node;
+    }
+    function buildCourseDetail(course, renderedWeek) {
+      const date = dateForCourse(renderedWeek, course), today = todayStart();
+      const wrap = el("div", "cd");
+      // 主角：星期与节次
+      const hero = el("div", "cd-hero");
+      const span = courseSpan(course);
+      hero.append(el("div", "cd-when", `${days[course[2]-1]} · ${span.from}–${span.to}`));
+      const sub = el("div", "cd-sub");
+      const rel = el("span", "cd-rel", courseCountdown(date, span));
+      if (rel.textContent.startsWith("已") || calendarDay(date) < calendarDay(today)) rel.classList.add("past");
+      sub.append(rel, el("span", "", `第${course[3]}–${course[4]}节 · ${humanDate(date)} · 第${renderedWeek}周`));
+      hero.append(sub);
+      if (span.lunch) hero.append(el("div", "cd-lunch", `中午 ${span.lunch.text} 休息`));
+      // 地点：楼名淡一点，教室号放大
+      const [building, room] = splitPlace(course[1]);
+      const place = el("div", "cd-row cd-place");
+      const where = el("div", "cd-where");
+      if (building) where.append(el("span", "cd-bld", building));
+      where.append(el("strong", "cd-room", room));
+      place.append(el("span", "cd-label", "地点"), where);
+      // 周次：一排格子，有课的周填色，已过的变淡，正在看的这周描边
+      const occ = [];
+      for (let w = 1; w <= SEMESTER.totalWeeks; w++) if (active(course[5], w)) occ.push(w);
+      const weeks = el("div", "cd-weeks");
+      const head = el("div", "cd-row");
+      head.append(el("span", "cd-label", "周次"), el("span", "cd-weektext", formatWeeks(course[5])));
+      const strip = el("div", "cd-strip");
+      strip.style.setProperty("--n", SEMESTER.totalWeeks);
+      strip.setAttribute("aria-hidden", "true");
+      for (let w = 1; w <= SEMESTER.totalWeeks; w++) {
+        const cell = el("i");
+        if (occ.includes(w)) cell.classList.add("on");
+        if (calendarDay(dateForCourse(w, course)) < calendarDay(today)) cell.classList.add("past");
+        if (w === renderedWeek) cell.classList.add("cur");
+        strip.append(cell);
+      }
+      const axis = el("div", "cd-axis");
+      [1, Math.round(SEMESTER.totalWeeks/2), SEMESTER.totalWeeks].forEach(n => axis.append(el("span", "", `${n}`)));
+      // 进度按整门课算：同名课程的所有时段、所有老师分段合在一起，按日期和节次排序。
+      // （r6 及以前只数当前这一行数据，换老师的分段结束时会误报“这是最后一次”。）
+      const sessionMap = new Map();
+      COURSES.filter(c => c[0] === course[0]).forEach(c => {
+        for (let w = 1; w <= SEMESTER.totalWeeks; w++) if (active(c[5], w)) {
+          const day = calendarDay(dateForCourse(w, c));
+          sessionMap.set(`${day}|${c[3]}`, { day, start: c[3] });
+        }
+      });
+      const sessions = [...sessionMap.values()].sort((x, y) => x.day - y.day || x.start - y.start);
+      const allDone = sessions.filter(x => x.day < calendarDay(today)).length;
+      const total = sessions.length, left = total - allDone;
+      const lastSession = sessions[total-1];
+      const isLast = !!lastSession && lastSession.day === calendarDay(date) && lastSession.start === course[3] && calendarDay(date) >= calendarDay(today);
+      const statText = `共 ${total} 次 · 已上 ${allDone} 次${left === 0 ? " · 已经全部上完" : isLast ? " · 这是最后一次" : ` · 还剩 ${left} 次`}`;
+      const stat = el("button", "cd-stat", statText);
+      stat.type = "button";
+      // 彩蛋：点一下进度，换成一句进度点评
+      const pct = total ? Math.round(allDone / total * 100) : 0;
+      const quips = pct === 0 ? ["进度 0%，一切皆有可能 🌱", "还没开始，先别慌 🫧"]
+        : pct < 40 ? [`进度 ${pct}%，刚热完身 🏃`, `进度 ${pct}%，路还长，水带够 🥤`]
+        : pct < 80 ? [`进度 ${pct}%，过半了，稳住 🧘`, `进度 ${pct}%，已经看得见终点线 👀`]
+        : pct < 100 ? [`进度 ${pct}%，胜利在望 🏁`, `进度 ${pct}%，最后几节，冲 🚀`]
+        : ["进度 100%，这门课你毕业了 🎓", "全部上完，给自己鼓个掌 👏"];
+      let showingQuip = false;
+      stat.addEventListener("click", () => {
+        showingQuip = !showingQuip;
+        stat.textContent = showingQuip ? quips[Math.floor(Math.random() * quips.length)] : statText;
+        stat.classList.toggle("quip", showingQuip);
+      });
+      weeks.append(head, strip, axis, stat);
+      wrap.append(hero, place, weeks);
+      // 同一门课的其他时段
+      const key = c => `${c[2]}|${c[3]}|${c[4]}|${c[1]}|${c[5]}`;
+      const seen = new Set([key(course)]);
+      const others = COURSES.filter(c => c[0] === course[0] && !seen.has(key(c)) && seen.add(key(c)))
+        .sort((a, b) => a[2] - b[2] || a[3] - b[3]);
+      if (others.length) {
+        const box = el("div", "cd-others");
+        box.append(el("span", "cd-label", "这门课的其他时段"));
+        const list = el("ul");
+        others.forEach(c => {
+          const li = el("li");
+          const otherSpan = courseSpan(c);
+          li.append(el("strong", "", `${days[c[2]-1]} ${otherSpan.from}–${otherSpan.to}`), el("span", "", `${shortPlace(c[1])} · ${formatWeeks(c[5])}`));
+          list.append(li);
+        });
+        box.append(list);
+        wrap.append(box);
+      }
+      return wrap;
+    }
+    function openCourse(course, trigger) {
+      if (Date.now() < suppressClickUntil || SHOWCASE.phase === "entering" || SHOWCASE.phase === "exiting") return;
+      if(isAnimating||drag||moduleTransitioning)return;
+      cancelPendingCourse();courseOpenTrigger=trigger;const openTicket=courseOpenTicket;
+      const renderedWeek = Number(trigger.closest(".schedule")?.dataset.week) || selectedWeek;
+      const body = buildCourseDetail(course, renderedWeek);
+      const palette = palettes[course[0]] || fallbackPalette;
+      if (isShowcaseOn()) { window.ScheduleShowcaseEngine?.course?.(trigger); wakeShowcaseCanvas(1400); }
+      trigger.classList.add("course-opening");
+      courseOpenTimer=setTimeout(() => {
+        courseOpenTimer=null;
+        if(openTicket!==courseOpenTicket||isAnimating||moduleTransitioning||courseModule.hidden||!trigger.isConnected)return;
+        trigger.classList.remove("course-opening");
+        openDialog({ title: course[0], body, accent: palette.ink, kind: "course", trigger, courseName: course[0], focusDelay: isShowcaseOn() ? 350 : null });
+      }, reduceMotion ? 0 : (isShowcaseOn() ? 80 : 40));
+    }
+
+    function randomItem(items) { return items[Math.floor(Math.random() * items.length)]; }
+    function uniqueCourses(items) {
+      const seen = new Set();
+      return items.filter(course => {
+        const key = `${course[0]}|${course[1]}|${course[2]}|${course[3]}|${course[4]}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+    /* ── “点我”：今日心情卡 ─────────────────────────────────
+       按今天的课、时间段挑一种心情；每种有几句台词，点表情会换一句；1/15 概率抽到隐藏款。 */
+    const MOODS = {
+      lucky:   { title:"隐藏款 · 今日大吉", hero:"🍀", tone:"#22A06B", close:"收下了", lines:["恭喜抽中隐藏款，今天点名不点你，提问不问你。","今日宜：准时下课、食堂不排队、作业一次过。","好运已送达，请在今天之内使用，过期不候。"] },
+      off:     { title:"课表放假中", hero:"🏝️", tone:"#3AA7C9", close:"继续放", lines:["学期还没开始（或者已经结束），课表去度假了。","今天课表不营业，有事请找明天的你。","没有课的日子，连课表都在晒太阳。"] },
+      night:   { title:"这个点还醒着？", hero:"🌙", tone:"#6366F1", close:"这就睡", lines:["现在睡还来得及，明天的你会感谢现在的你。","夜猫子认证通过，但课表建议你关灯。","月亮都要下班了，你也收收吧。"] },
+      weekend: { title:"周末模式已开启", hero:"🛋️", tone:"#8B7EC8", close:"再躺会", lines:["今天课表抓不到你，放心躺平。","周末的正确打开方式：先睡够，再说别的。","课表已下线，本人可同步下线。"] },
+      free:    { title:"工作日隐藏福利", hero:"🎈", tone:"#14B8A6", close:"芜湖", lines:["工作日没课，这一天白捡的，请尽情挥霍。","今天课表对你网开一面，别辜负它。","恭喜解锁：工作日自由日一枚。"] },
+      evening: { title:"今天的课下班了", hero:"🌆", tone:"#F97316", close:"收工", lines:["今天的课已经全部结束，辛苦啦。","课上完了，剩下的时间都归你。","白天交给课表，晚上还给自己。"] },
+      lab:     { title:"实验室今日常驻", hero:"🧪", tone:"#10B981", close:"开做", lines:["今天的实验够长，建议带上耐心和零食。","和实验台和平共处，争取准点收工。","这节实验的长度，够在实验室办个临时户口了。"] },
+      full:    { title:"满课，焊死了", hero:"🥵", tone:"#EF4444", close:"认了", lines:["从早上 8:30 到下午 4:40，一个空都没给你留。","今天的课表非常完整，完整得有点不讲情面。","满课日生存指南：水杯灌满，充电宝带上。"] },
+      friday:  { title:"周五限定", hero:"🎉", tone:"#EC4899", close:"冲", lines:["撑过今天，就是周末。","周五的课，上着上着就放学了。","今天是一周里最好熬的一天，冲。"] },
+      single:  { title:"今日只需出场一次", hero:"🎯", tone:"#3B82F6", close:"稳了", lines:["一门课打卡，今天难度：简单。","上完这一门就收工，课表今天很温柔。","今日任务只有一个，完成即胜利。"] },
+      lateStart:{ title:"上午是你的", hero:"☕", tone:"#A16207", close:"接着睡", lines:["第一门课在下午，上午躺着完全合法。","课表决定下午再来找你，上午请自便。","上午空着，早饭可以慢慢吃。"] },
+      early:   { title:"早八警报", hero:"⏰", tone:"#F59E0B", close:"起床", lines:["今天 8:30 就开课，闹钟请务必响。","早八已就位，就差你了。","太阳还没上班，你先上课。"] },
+      normal:  { title:"今日课表正常营业", hero:"📚", tone:"#7C3AED", close:"能行", lines:["不算轻松，也没到住在教室里的程度。","今天的课量在人类可接受范围内。","节奏刚好，按部就班就行。"] },
+      // r9：按作息时间说话。lines 是函数时，打开卡片那一刻按当前时间生成台词。
+      inClass: { title:"上课中，手机先放放", hero:"📖", tone:"#2563EB", close:"好的", lines:x => [
+        `${x.name}还剩 ${x.left}，撑住。`,
+        x.after ? `这节完了还有 ${x.after} 节，${x.dayEnd} 才真正自由。` : `这是今天最后一节，${x.dayEnd} 就自由了。`,
+        `老师在讲台上，课表在帮你计时：还有 ${x.left}。`] },
+      lunch:   { title:"午休时间", hero:"🍱", tone:"#EA580C", close:"去吃饭", lines:x => [
+        `下午 ${x.nextFrom} 开课，还有 ${x.wait}，先吃饱。`,
+        `${x.nextName}在 ${x.nextPlace}，${x.nextFrom} 见，别睡过头。`,
+        "午饭吃好，下午的课才扛得住。"] },
+      breakTime:{ title:"课间", hero:"🚶", tone:"#0891B2", close:"走了", lines:x => [
+        `下一节 ${x.nextFrom} ${x.nextName}，还有 ${x.wait}。`,
+        x.samePlace ? "不用换教室，原地续杯。" : `下一节在 ${x.nextPlace}，别走错教室。`,
+        `今天还剩 ${x.after} 节，${x.dayEnd} 收工。`] },
+      gap:     { title:"空档时间", hero:"🪑", tone:"#7C3AED", close:"安排上", lines:x => [
+        `离下一节还有 ${x.wait}，够干点别的了。`,
+        `${x.nextFrom} ${x.nextName}，记得回来。`,
+        `空档 ${x.wait}，图书馆、食堂、宿舍，任选其一。`] }
+    };
+    function dailyMoodForToday() {
+      const clock = beijingNow(), hour = clock.getHours(), weekday = now.getDay();
+      const courses = currentWeekInSemester ? uniqueCourses(coursesFor(currentWeek).filter(course => course[2] === (weekday || 7))).sort((a,b) => a[3]-b[3]) : [];
+      const occupied = new Set();
+      courses.forEach(course => { for (let p = course[3]; p <= course[4]; p++) occupied.add(p); });
+      const state = classStateAt(clock);
+      const short = course => shortNames[course[0]] || course[0];
+      // 台词里要用到的时间信息
+      const x = { dayEnd: state.items.length ? state.items[state.items.length-1].to : "", after: state.items.filter(item => item.start > state.t).length };
+      if (state.current) Object.assign(x, { name: short(state.current.course), left: durationText(state.current.end - state.t) });
+      if (state.next) Object.assign(x, { nextFrom: state.next.from, nextName: short(state.next.course), nextPlace: shortPlace(state.next.course[1]), wait: durationText(state.next.start - state.t) });
+      let hint = "";
+      const make = key => {
+        const mood = MOODS[key];
+        return { key, ...mood, lines: typeof mood.lines === "function" ? mood.lines(x) : mood.lines, courses, periods: occupied.size, hint, state };
+      };
+      if (Math.random() < 1/15) return make("lucky");
+      if (!currentWeekInSemester) return make("off");
+      if (hour < 5) {
+        if (state.next) hint = `第一节 ${state.next.from} ${short(state.next.course)} · 还有 ${durationText(state.next.start - state.t)}`;
+        return make("night");
+      }
+      if (!courses.length) return make(weekday === 0 || weekday === 6 ? "weekend" : "free");
+      if (state.current && !state.inLunch) return make("inClass");
+      if (state.ended) {
+        const next = nextCourseAfter(state.day);
+        if (next) hint = `下次：${relativeDay(next.date)} ${courseSpan(next.course).from} ${short(next.course)} · ${shortPlace(next.course[1])}`;
+        return make("evening");
+      }
+      const started = state.items.some(item => item.start <= state.t);
+      if (started && state.next) {
+        const lastEnded = [...state.items].reverse().find(item => item.end <= state.t);
+        x.samePlace = !!lastEnded && lastEnded.course[1] === state.next.course[1];
+        if (state.inLunch || (state.next.start >= minutesOf(CLASS_TIMES[4][0]) && state.t < minutesOf(CLASS_TIMES[4][0]) && state.t >= minutesOf(CLASS_TIMES[3][1]))) {
+          if (state.inLunch) Object.assign(x, { nextFrom: state.current.lunch.resume, nextName: short(state.current.course), nextPlace: shortPlace(state.current.course[1]), wait: durationText(state.current.lunch.to - state.t) });
+          return make("lunch");
+        }
+        return make(state.next.start - state.t <= 20 ? "breakTime" : "gap");
+      }
+      // 第一节还没开始：沿用原来的心情，下面加一行“第一节几点、还有多久”
+      if (state.next) hint = `第一节 ${state.next.from} ${short(state.next.course)} · 还有 ${durationText(state.next.start - state.t)}`;
+      if (courses.some(course => course[0].includes("实验") && course[4] - course[3] + 1 >= 4)) return make("lab");
+      if (periods.every(([start, end]) => courses.some(course => course[3] <= end && course[4] >= start))) return make("full");
+      if (weekday === 5) return make("friday");
+      if (courses.length === 1) return make("single");
+      const firstStart = Math.min(...courses.map(course => course[3]));
+      if (firstStart >= 5) return make("lateStart");
+      if (firstStart === 1) return make("early");
+      return make("normal");
+    }
+    function showDailyMood(trigger = document.activeElement) {
+      refreshDateState();
+      const mood = dailyMoodForToday();
+      const wrap = el("div", "mood");
+      wrap.style.setProperty("--tone", mood.tone);
+      // 表情：点一下换一句台词
+      const hero = el("button", "mood-hero");
+      hero.type = "button";
+      hero.setAttribute("aria-label", "换一句");
+      hero.append(el("span", "mood-emoji", mood.hero));
+      let lineIndex = Math.floor(Math.random() * mood.lines.length);
+      const line = el("p", "mood-line", mood.lines[lineIndex]);
+      hero.addEventListener("click", () => {
+        lineIndex = (lineIndex + 1) % mood.lines.length;
+        line.textContent = mood.lines[lineIndex];
+        hero.classList.remove("boing"); void hero.offsetWidth; hero.classList.add("boing");
+      });
+      wrap.append(hero, line);
+      if (mood.hint) wrap.append(el("p", "mood-hint", mood.hint));
+      if (mood.courses.length) {
+        const today = el("div", "mood-today");
+        const head = el("div", "mood-head");
+        head.append(el("span", "", "今日课程"), el("small", "", `${new Set(mood.courses.map(c => c[0])).size} 门 · ${mood.periods} 节`));
+        const list = el("ul");
+        mood.courses.forEach(c => {
+          const li = el("li");
+          li.dataset.courseName = c[0];
+          const span = courseSpan(c);
+          if (mood.state.current?.course === c) li.classList.add("now");
+          else if (mood.state.t >= span.end) li.classList.add("done");
+          li.append(el("b", "", span.from), el("strong", "", shortNames[c[0]] || c[0]), el("span", "", shortPlace(c[1])));
+          list.append(li);
+        });
+        today.append(head, list);
+        wrap.append(today);
+      } else if (currentWeekInSemester) appendNextCourse(wrap, now);
+      const modeButton = el("button", "mode-launch", isShowcaseOn() ? "恢复普通模式" : "启动实验模式 ✦");
+      modeButton.type = "button";
+      modeButton.addEventListener("click", async () => {
+        const box = modeButton.getBoundingClientRect();
+        const origin = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+        pendingEaster = null;
+        if (isShowcaseOn()) { closeDialog(false); exitShowcase(); return; }
+        const loadingTicket=sheetTicket;
+        modeButton.disabled = true;
+        modeButton.textContent = "实验场充能中…";
+        try { await ensureShowcaseAssets(); } catch (_) { modeButton.disabled=false; modeButton.textContent="未能加载，点此重试"; return; }
+        if(loadingTicket!==sheetTicket || !modeButton.isConnected)return;
+        modeButton.disabled=false;modeButton.textContent="启动实验模式 ✦";
+        if(document.hidden)return;
+        closeDialog(false);
+        enterShowcase(origin);
+      });
+      wrap.append(modeButton);
+      const freeDay = now.getDay()>0 && now.getDay()<6 && !mood.courses.length && currentWeekInSemester;
+      openDialog({ title: mood.title, body: wrap, accent: mood.tone, kind: freeDay ? "free-easter" : "easter", closeLabel: mood.close, trigger });
+      if(isShowcaseOn()&&freeDay)window.ScheduleShowcaseEngine?.celebrate?.(dialogCard);
+    }
+    function openDailyMood(trigger) { showDailyMood(trigger); }
+    /* ── 小提示与彩蛋 ───────────────────────────────────── */
+    let toastTimer = 0;
+    function toast(message) {
+      let node = document.getElementById("toast");
+      if (!node) { node = el("div", "toast"); node.id = "toast"; node.setAttribute("role", "status"); document.body.append(node); }
+      node.textContent = message;
+      node.classList.remove("show"); void node.offsetWidth; node.classList.add("show");
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => node.classList.remove("show"), 2300);
+    }
+    function edgeToast(atEnd) {
+      const holiday = (document.getElementById("semesterLabel")?.textContent || "").includes("秋") ? "寒假" : "暑假";
+      toast(atEnd
+        ? randomItem([`学期到头啦，再往后就是${holiday} 🧣`, `第 ${SEMESTER.totalWeeks} 周是终点站，请带好随身物品 🚉`, "后面没有课了，课表也想放假 🏖️"])
+        : randomItem(["还没开学呢，往前没有课了 🎒", "第 1 周就是起点，再往前是假期 🌴", "往前翻不动了，这里是开头 🚩"]));
+    }
+    function retireSwipeHint() {
+      try { localStorage.setItem("swipeHintSeen", "99"); } catch (_) {}
+      document.body.classList.add("no-swipe-hint");
+    }
+    function initSwipeHint() {
+      let seen = 0; try { seen = Number(localStorage.getItem("swipeHintSeen")) || 0; localStorage.setItem("swipeHintSeen", String(seen + 1)); } catch (_) {}
+      if (seen >= 5) document.body.classList.add("no-swipe-hint");
+    }
+    // 点“2026 秋季学期”：学期进度
+    function openSemesterProgress(trigger) {
+      const today = todayStart(), start = firstMonday, end = mondayOf(SEMESTER.totalWeeks + 1);
+      const total = Math.round((calendarDay(end) - calendarDay(start)) / msDay);
+      const passed = Math.min(total, Math.max(0, Math.round((calendarDay(today) - calendarDay(start)) / msDay)));
+      const pct = Math.round(passed / total * 100), left = total - passed;
+      const wrap = el("div", "sem");
+      const big = el("div", "sem-big"); big.append(el("strong", "", `${pct}%`), el("span", "", "学期进度"));
+      const strip = el("div", "cd-strip"); strip.style.setProperty("--n", SEMESTER.totalWeeks); strip.setAttribute("aria-hidden", "true");
+      for (let w = 1; w <= SEMESTER.totalWeeks; w++) {
+        const cell = el("i", "on");
+        if (w < currentWeek || !currentWeekInSemester && passed >= total) cell.classList.add("past");
+        if (currentWeekInSemester && w === currentWeek) cell.classList.add("cur");
+        strip.append(cell);
+      }
+      const facts = el("p", "sem-facts", passed <= 0 ? "学期还没开始，课表在热身。"
+        : left <= 0 ? "这个学期已经结束了，辛苦啦。"
+        : `已经过去 ${passed} 天，还剩 ${left} 天${currentWeekInSemester ? ` · 现在是第 ${currentWeek} 周` : ""}`);
+      const quip = el("p", "sem-quip", pct <= 0 ? "一切才刚开始 🌱" : pct < 25 ? "刚出发，还很新鲜 🚲" : pct < 50 ? "快到一半了，节奏不错 🎵" : pct < 75 ? "过半了，下坡路开始了 🛷" : pct < 100 ? "终点线已经看得见了 🏁" : "完结撒花 🎉");
+      wrap.append(big, strip, facts, quip);
+      openDialog({ title: document.getElementById("semesterLabel").textContent, body: wrap, accent: "#7C3AED", kind: "semester", closeLabel: "知道了", trigger });
+    }
+    function isShowcaseOn() { return SHOWCASE.phase === "on" || SHOWCASE.phase === "entering"; }
+    function showcaseDelay(callback, delay) {
+      const runId = SHOWCASE.runId;
+      const timer = setTimeout(() => {
+        SHOWCASE.timers.delete(timer);
+        if (runId === SHOWCASE.runId) callback();
+      }, delay);
+      SHOWCASE.timers.add(timer);
+      return timer;
+    }
+    function clearShowcaseTimers() {
+      SHOWCASE.timers.forEach(timer => clearTimeout(timer));
+      SHOWCASE.timers.clear();
+    }
+    function ownShowcaseNode(node) {
+      node.setAttribute("data-showcase-owned", "true");
+      SHOWCASE.owned.add(node);
+      return node;
+    }
+    function whenAnimationEnds(animation, callback, fallback = 2100) {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        callback();
+      };
+      if (animation?.finished && typeof animation.finished.then === "function") {
+        animation.finished.then(finish, finish);
+      } else {
+        animation?.addEventListener?.("finish", finish, { once: true });
+        animation?.addEventListener?.("cancel", finish, { once: true });
+        setTimeout(finish, fallback);
+      }
+    }
+    function trackShowcaseAnimation(animation) {
+      SHOWCASE.animations.add(animation);
+      whenAnimationEnds(animation, () => SHOWCASE.animations.delete(animation));
+      return animation;
+    }
+    function cancelShowcaseAnimations() {
+      SHOWCASE.animations.forEach(animation => animation.cancel());
+      SHOWCASE.animations.clear();
+    }
+    function syncModeBadges() {
+      const visible = isShowcaseOn() || SHOWCASE.phase === "exiting";
+      courseModeBadge.hidden = !visible;
+      examModeBadge.hidden = !visible;
+      const entering = SHOWCASE.phase === "entering";
+      courseModeBadge.textContent = entering ? "⚡ 启动中" : "✦ 退出实验";
+      courseModeBadge.setAttribute("aria-label", entering ? "实验模式启动中，点击立即退出" : "退出实验模式");
+      examModeBadge.textContent = entering ? "⚡ 启动中" : "⚡ 实验核心";
+      examModeBadge.setAttribute("aria-label", entering ? "实验模式启动中，点击立即退出" : "打开实验控制台");
+      dailyMoodButton.textContent = "点我";
+      dailyMoodButton.classList.remove("pro-core-button");
+      syncShowcaseControls();
+    }
+    function resizeShowcaseCanvas() { window.ScheduleShowcaseEngine?.resize?.(); }
+    function wakeShowcaseCanvas(duration=1600) { window.ScheduleShowcaseEngine?.wake?.(duration); }
+    function pauseShowcaseCanvas() { window.ScheduleShowcaseEngine?.pause?.(); }
+    function destroyShowcaseCanvas() { window.ScheduleShowcaseEngine?.destroy?.(); }
+    function enterShowcase(origin = null) {
+      if(SHOWCASE.phase!=="off"||moduleTransitioning||farJumping)return;
+      if(!window.ScheduleShowcaseEngine){ensureShowcaseAssets().then(()=>enterShowcase(origin)).catch(()=>{});return;}
+      if(isAnimating||drag)settleNavigation({commit:true});
+      SHOWCASE.runId++;SHOWCASE.phase="entering";
+      document.body.classList.remove("showcase-exiting");document.body.classList.add("showcase-entering");syncModeBadges();
+      // 开场时长由引擎决定（约 5 秒）；开场中点一下，引擎会提前调用 completeShowcaseEntry
+      const startupMs=Number(window.ScheduleShowcaseEngine.playStartup(origin))||520;
+      showcaseDelay(completeShowcaseEntry,reduceMotion?20:startupMs+80);
+    }
+    function completeShowcaseEntry(){
+      if(SHOWCASE.phase!=="entering")return;
+      document.body.classList.remove("showcase-entering");document.body.classList.add("showcase-active");SHOWCASE.phase="on";
+      syncModeBadges();window.ScheduleShowcaseEngine?.sync?.();if(!examModule.hidden)renderExamModule();
+    }
+    function removeShowcaseOwnedNodes() {
+      Array.from(SHOWCASE.owned).forEach(node => node.remove());
+      SHOWCASE.owned.clear();
+    }
+    function finishShowcaseExit() {
+      destroyShowcaseCanvas();
+      removeShowcaseOwnedNodes();
+      document.body.classList.remove("showcase-active", "showcase-entering", "showcase-exiting");
+      shell.classList.remove("moving-next", "moving-prev");
+      roots.forEach(root => root.querySelectorAll(".course").forEach(card => {
+        card.classList.remove("title-wave");
+      }));
+      orbTapTimes = [];
+      emptyTapTimes = [];
+      titleTapTimes = [];
+      longTitleTapTimes = [];
+      titleTrigger.classList.remove("title-tap", "title-unlocked");
+      examCard.querySelectorAll(".orb-tap, .scanning, .exam-node-active").forEach(element => element.classList.remove("orb-tap", "scanning", "exam-node-active"));
+      if (!EXAMS.length) {
+        const examText = examCard.querySelector(".exam-placeholder p");
+        if (examText) examText.textContent = "还未获取到具体日期，待老夫掐指一算";
+      }
+      roots.forEach(root => root.querySelectorAll(".empty-message").forEach(message => {
+        message.classList.remove("empty-celebrate");
+        message.textContent = "本周暂时自由 🥳";
+      }));
+      SHOWCASE.phase = "off";
+      SHOWCASE.majorUntil = 0;
+      SHOWCASE.pendingExit = false;
+      syncModeBadges();
+      if (!examModule.hidden) renderExamModule();
+    }
+    function exitShowcase({ immediate = false } = {}) {
+      if (SHOWCASE.phase === "off") return;
+      if (SHOWCASE.phase === "exiting") {
+        if (immediate) {
+          SHOWCASE.runId++;
+          clearShowcaseTimers();
+          cancelShowcaseAnimations();
+          finishShowcaseExit();
+        }
+        return;
+      }
+      if (moduleTransitioning && !immediate) {
+        SHOWCASE.pendingExit = true;
+        return;
+      }
+      if (isAnimating || drag) settleNavigation({commit:true});
+      SHOWCASE.runId++;
+      clearShowcaseTimers();
+      cancelShowcaseAnimations();
+      const proRunning = window.ScheduleShowcaseEngine?.isRunning?.();
+      if (proRunning && !immediate) window.ScheduleShowcaseEngine.beginExit();
+      else pauseShowcaseCanvas();
+      SHOWCASE.phase = "exiting";
+      document.body.classList.remove("showcase-active", "showcase-entering");
+      document.body.classList.add("showcase-exiting");
+      syncModeBadges();
+      if (immediate || reduceMotion) {
+        finishShowcaseExit();
+        return;
+      }
+      showcaseDelay(finishShowcaseExit, proRunning ? 1680 : 1320);
+    }
+    function playGravityEaster() {
+      if(isShowcaseOn()&&!moduleTransitioning)window.ScheduleShowcaseEngine?.play?.("overdrive");
+    }
+    function playCalibration() {
+      if (!isShowcaseOn()) return;
+      shell.querySelector(".calibration-overlay")?.remove();
+      const overlay = ownShowcaseNode(document.createElement("span"));
+      overlay.className = "calibration-overlay";
+      overlay.setAttribute("aria-hidden", "true");
+      shell.append(overlay);
+      showcaseDelay(() => {
+        overlay.remove();
+        SHOWCASE.owned.delete(overlay);
+      }, 1100);
+      wakeShowcaseCanvas(1200);
+    }
+    function celebrateEmpty(message) {
+      if (!isShowcaseOn() || !message) return;
+      message.classList.remove("empty-celebrate");
+      void message.offsetWidth;
+      message.classList.add("empty-celebrate");
+      showcaseDelay(() => message.classList.remove("empty-celebrate"), 2450);
+      wakeShowcaseCanvas(2700);
+    }
+    function playTitleEaster() {
+      if(isShowcaseOn()){window.ScheduleShowcaseEngine?.play?.("scan");return;}
+      titleTrigger.classList.remove("title-unlocked");
+      void titleTrigger.offsetWidth;
+      titleTrigger.classList.add("title-unlocked");
+      const cards = Array.from(roots[1].querySelectorAll(".course")).sort((a, b) =>
+        Number(a.dataset.waveRow) - Number(b.dataset.waveRow) || Number(a.dataset.waveCol) - Number(b.dataset.waveCol)
+      );
+      cards.forEach((card, index) => {
+        card.classList.remove("title-wave");
+        card.style.setProperty("--wave-index", String(index));
+        void card.offsetWidth;
+        card.classList.add("title-wave");
+      });
+      const duration = reduceMotion ? 20 : (isShowcaseOn() ? 1250 + Math.max(0, cards.length - 1) * 75 : 560 + Math.max(0, cards.length - 1) * 52);
+      if (isShowcaseOn()) wakeShowcaseCanvas(Math.min(3200, duration + 500));
+      setTimeout(() => {
+        titleTrigger.classList.remove("title-unlocked");
+        cards.forEach(card => card.classList.remove("title-wave"));
+      }, duration);
+    }
+
+    function playOverloadEaster() {
+      titleTapTimes = [];
+      longTitleTapTimes = [];
+      titleTrigger.classList.remove("title-unlocked", "title-tap");
+      roots[1].querySelectorAll(".course").forEach(card => card.classList.remove("title-wave"));
+      if (isShowcaseOn()) playGravityEaster();
+      else {
+        const box = titleTrigger.getBoundingClientRect();
+        const origin = { x: box.left + box.width * .52, y: box.top + box.height * .5 };
+        ensureShowcaseAssets().then(() => {
+          if (SHOWCASE.phase === "off" && !document.hidden && !dialog.classList.contains("open")) enterShowcase(origin);
+        }).catch(()=>{});
+      }
+    }
+    function registerTitleTap() {
+      if (dialog.classList.contains("open") || isAnimating || drag || moduleTransitioning || courseModule.hidden || SHOWCASE.phase === "entering" || SHOWCASE.phase === "exiting") return;
+      const time = Date.now();
+      titleTapTimes = titleTapTimes.filter(item => time - item <= 2000);
+      longTitleTapTimes = longTitleTapTimes.filter(item => time - item <= 10000);
+      titleTapTimes.push(time);
+      longTitleTapTimes.push(time);
+      titleTrigger.classList.add("title-tap");
+      setTimeout(() => titleTrigger.classList.remove("title-tap"), 90);
+      if (longTitleTapTimes.length >= 15) {
+        playOverloadEaster();
+        return;
+      }
+      if (titleTapTimes.length >= 5) {
+        titleTapTimes = [];
+        playTitleEaster();
+      }
+    }
+    /* ── 考试倒数日（r10）───────────────────────────────────
+       按北京时间的日历天数算；日期写错（解析不出来）的考试不参与倒数。 */
+    function examDaysLeft(exam) {
+      const parsed = new Date(`${exam.date}T00:00:00`);
+      if (Number.isNaN(parsed.getTime())) return null;
+      return Math.round((calendarDay(parsed) - calendarDay(todayStart())) / msDay);
+    }
+    function countdownLabel(days) { return days === 0 ? "今天" : days === 1 ? "明天" : days === 2 ? "后天" : `${days} 天后`; }
+    function nextExam(exams = sortedExams()) { return exams.find(exam => (examDaysLeft(exam) ?? -1) >= 0) || null; }
+    function updateExamButton() {
+      const exams = sortedExams(), next = nextExam(exams), days = next ? examDaysLeft(next) : null;
+      document.getElementById("openExamModule").firstChild.textContent = !exams.length ? "考试安排 "
+        : next ? `考试安排 · ${days <= 2 ? `${countdownLabel(days)}考${shortNames[next.course] || next.course}` : `最近 ${days} 天`} ` : `考试安排 · ${exams.length}门 `;
+    }
+    function sortedExams() {
+      return [...EXAMS].sort((a, b) => `${a.date || ""} ${a.time || ""}`.localeCompare(`${b.date || ""} ${b.time || ""}`));
+    }
+    function renderExamModule() {
+      const badge = examModeBadge;
+      const exams = sortedExams();
+      const interactive = isShowcaseOn();
+      examCard.replaceChildren(badge);
+      examCard.classList.toggle("has-materials",interactive);
+      badge.hidden = !isShowcaseOn();
+      updateExamButton();
+      const upcoming = nextExam(exams);
+      if (!exams.length) {
+        const placeholder = document.createElement("div");
+        placeholder.className = "exam-placeholder";
+        const orb = document.createElement(interactive ? "button" : "div");
+        if (interactive) orb.type = "button";
+        orb.className = "exam-orb";
+        if(interactive){
+          ["nebula-core","nebula-ring","nebula-ring","nebula-glint"].forEach(name=>{const part=document.createElement("i");part.className=name;part.setAttribute("aria-hidden","true");orb.append(part);});
+        }else orb.textContent="🔮";
+        if (interactive) orb.setAttribute("aria-label", "考试安排尚未现身，连续点击有彩蛋");
+        else orb.setAttribute("aria-hidden", "true");
+        const title = document.createElement("h2");
+        title.textContent = "考试安排尚未现身";
+        const text = document.createElement("p");
+        text.textContent = "还未获取到具体日期，待老夫掐指一算";
+        if (interactive) orb.addEventListener("click", () => handleExamOrbTap(orb, text));
+        placeholder.append(orb, title, text);
+        examCard.append(placeholder);
+      } else {
+        const content = document.createElement("div");
+        content.className = "exam-content";
+        const summary = document.createElement("div");
+        summary.className = "exam-summary";
+        const title = document.createElement("h2");
+        const note = document.createElement("p");
+        const doneCount = exams.filter(exam => (examDaysLeft(exam) ?? 0) < 0).length;
+        if (upcoming) {
+          const days = examDaysLeft(upcoming);
+          title.textContent = days === 0 ? `今天考${upcoming.course}，加油` : days === 1 ? `明天考${upcoming.course}` : `距${upcoming.course}还有 ${days} 天`;
+          note.textContent = `本学期共 ${exams.length} 门${doneCount ? ` · 已考完 ${doneCount} 门` : ""}，按时间先后排好了`;
+        } else if (doneCount === exams.length) {
+          title.textContent = "考试全部结束 🎉";
+          note.textContent = `本学期 ${exams.length} 门都考完了，辛苦了`;
+        } else {
+          title.textContent = "考试安排，算到了";
+          note.textContent = `本学期共 ${exams.length} 门，按时间先后排好了`;
+        }
+        summary.append(title, note);
+        const list = document.createElement("div");
+        list.className = "exam-list";
+        exams.forEach((exam, index) => {
+          const palette = palettes[exam.course] || fallbackPalette;
+          const item = document.createElement(interactive ? "button" : "div");
+          if (interactive) item.type = "button";
+          const daysLeft = examDaysLeft(exam);
+          item.className = `exam-item${exam === upcoming ? " is-next" : ""}${daysLeft != null && daysLeft < 0 ? " is-over" : ""}`;
+          item.dataset.courseName = exam.course || "";
+          item.style.setProperty("--exam-delay", `${Math.min(240,index*40)}ms`);
+          const parsed = new Date(`${exam.date}T00:00:00`);
+          const validDate = !Number.isNaN(parsed.getTime());
+          const date = document.createElement("span");
+          date.className = "exam-date";
+          const day = document.createElement("strong");
+          day.textContent = validDate ? String(parsed.getDate()) : "—";
+          const month = document.createElement("small");
+          month.textContent = validDate ? `${parsed.getMonth()+1}月 · ${weekdayText(parsed)}` : "日期待定";
+          date.append(day, month);
+          const info = document.createElement("span");
+          info.className = "exam-info";
+          const course = document.createElement("strong");
+          course.textContent = exam.course || "未命名考试";
+          const time = document.createElement("span");
+          time.textContent = exam.time || "时间待定";
+          const place = document.createElement("span");
+          place.textContent = exam.place || "地点待定";
+          info.append(course, time, place);
+          if (daysLeft != null) info.append(el("span", "exam-countdown", daysLeft < 0 ? "已考完" : countdownLabel(daysLeft)));
+          if (exam.note) {
+            const extra = document.createElement("span");
+            extra.className = "exam-note";
+            extra.textContent = exam.note;
+            info.append(extra);
+          }
+          item.append(date, info);
+          if (interactive) {
+            item.addEventListener("click", () => {
+              if (!isShowcaseOn()) return;
+              item.classList.remove("exam-node-active");
+              void item.offsetWidth;
+              item.classList.add("exam-node-active");
+              wakeShowcaseCanvas(1200);
+        showcaseDelay(() => item.classList.remove("exam-node-active"), 1350);
+            });
+          }
+          list.append(item);
+        });
+        content.append(summary, list);
+        examCard.append(content);
+      }
+      if(interactive)examCard.append(makeStudyMaterials());
+      examRendered = true;
+    }
+    function makeStudyMaterials() {
+      const section=document.createElement("section");section.id="examMaterials";section.className="study-materials";
+      section.setAttribute("aria-labelledby","materialsTitle");
+      const heading=document.createElement("div");heading.className="materials-heading";
+      const title=document.createElement("h3");title.id="materialsTitle";title.textContent="复习资料";
+      const status=document.createElement("span");status.className="materials-status";status.textContent="已上线";
+      heading.append(title,status);
+      const body=document.createElement("p");body.textContent="往届题、考点卡、模拟卷都在里面，手机上随时刷。";
+      const go=document.createElement("a");go.className="materials-go";go.href="/study";go.textContent="去刷题 →";
+      // 彩蛋：3 秒内点这块（按钮以外）5 下，按钮换一句话
+      let taps=[];
+      section.addEventListener("click",event=>{
+        if(event.target.closest(".materials-go"))return;
+        const now=Date.now();taps=taps.filter(t=>now-t<3000);taps.push(now);
+        if(taps.length>=5){taps=[];go.textContent="别犹豫了，点进去刷 🫵";}
+      });
+      section.append(heading,body,go);return section;
+    }
+    function handleExamOrbTap(orb, text) {
+      if(!isShowcaseOn()||EXAMS.length)return;
+      const time=Date.now();orbTapTimes=orbTapTimes.filter(item=>time-item<3500);orbTapTimes.push(time);
+      const secret=orbTapTimes.length>=5;
+      window.ScheduleShowcaseEngine?.oracle?.(orb,secret);
+      if(!secret)return;orbTapTimes=[];
+      text.textContent="再点也算不出来，天机还没上传";
+      showcaseDelay(()=>{if(text.isConnected)text.textContent="还未获取到具体日期，待老夫掐指一算";},2400);
+    }
+    function syncModuleHeight() {
+      if (!courseModule.hidden && !courseModule.classList.contains("module-behind")) courseModuleHeight = courseModule.offsetHeight;
+      if (courseModuleHeight) examModule.style.minHeight = `${courseModuleHeight}px`;
+    }
+
+    function switchModule(toExam, fromHistory=false) {
+      if(moduleTransitioning){pendingModuleRoute={toExam,fromHistory};return;}
+      if(toExam===!examModule.hidden||dialog.classList.contains("open")||SHOWCASE.phase==="entering"||SHOWCASE.phase==="exiting")return;
+      if(!fromHistory){
+        if(toExam)pushMobileHistory({screen:"exam",dialog:false});
+        else if(history.state?.scheduleV3&&history.state.screen==="exam") { history.back();return; }
+      }
+      settleNavigation({commit:true});
+      if(toExam)courseScrollPosition=window.scrollY;
+      if(toExam)renderExamModule();
+      const source=toExam?courseModule:examModule,target=toExam?examModule:courseModule;
+      const experimental=isShowcaseOn()&&!reduceMotion;
+      const originEl=toExam?document.getElementById("openExamModule"):document.getElementById("backToSchedule");
+      const o=originEl.getBoundingClientRect(),tapPoint={x:o.left+o.width/2,y:o.top+o.height/2};
+      const engine=window.ScheduleShowcaseEngine;
+      // 实验模式：转场围绕屏幕中部的奇点展开；普通模式不用这个点
+      const point=experimental&&engine?.holePoint?engine.holePoint():tapPoint;
+      const ticket=++moduleTicket;moduleTransitioning=true;
+      moduleStage.style.minHeight=`${source.offsetHeight}px`;
+      setModuleInteractive(source,false);
+      let outAnim=null,inAnim=null,swapped=false,finished=false,swapTimer=0;
+      const originIn=el=>{const r=el.getBoundingClientRect();return `${point.x-r.left}px ${point.y-r.top}px`;};
+      const swap=()=>{
+        if(swapped||ticket!==moduleTicket)return;swapped=true;clearTimeout(swapTimer);
+        try{outAnim?.cancel();}catch(_){}source.style.transformOrigin="";
+        source.hidden=true;source.setAttribute("aria-hidden","true");
+        target.hidden=false;target.setAttribute("aria-hidden","false");setModuleInteractive(target,false);
+        window.scrollTo(0,toExam?0:courseScrollPosition);
+        if(experimental)window.ScheduleShowcaseEngine?.portalLanding?.(toExam);
+        try{
+          if(experimental&&target.animate){
+            // 穿过水晶内部时新页面藏着；隧道尽头亮起后，页面框架先浮现，里面的内容随凝晶光环逐个成形（引擎负责）
+            target.style.transformOrigin=originIn(target);
+            const swapAt=engine?.PORTAL_SWAP||2.74,land=engine?.PORTAL_LAND||4.05,end=engine?.PORTAL_END||5.4;
+            const span=end-swapAt,k=t=>Math.min(1,Math.max(0,(t-swapAt)/span));
+            inAnim=target.animate([
+              {transform:"scale(.9)",filter:"blur(8px) brightness(2.2)",opacity:0},
+              {transform:"scale(.9)",filter:"blur(8px) brightness(2.2)",opacity:0,offset:k(land)},
+              {transform:"scale(1.02)",filter:"blur(0px) brightness(1.15)",opacity:1,offset:k(land+.55),easing:"cubic-bezier(.3,.7,.3,1)"},
+              {transform:"none",filter:"none",opacity:1}
+            ],{duration:span*1000,easing:"linear"});
+          } else if(!reduceMotion&&target.animate){
+            inAnim=target.animate([{transform:`translateY(${toExam?28:-15}px) scale(.984)`,opacity:.3},{transform:"translateY(0) scale(1)",opacity:1}],{duration:300,easing:"cubic-bezier(.2,.75,.2,1)"});
+          }
+        }catch(_){}
+        if(inAnim)inAnim.finished.then(done,done);else done();
+      };
+      const done=()=>{
+        if(finished||ticket!==moduleTicket)return;finished=true;clearTimeout(fallback);clearTimeout(swapTimer);
+        shield?.remove();
+        if(!swapped)swap();
+        finishActiveModule=null;try{inAnim?.cancel();}catch(_){}target.style.transformOrigin="";
+        moduleTransitioning=false;moduleStage.style.minHeight="";setModuleInteractive(target,true);syncModuleHeight();
+        if(!document.hidden)(toExam?document.getElementById("backToSchedule"):document.getElementById("openExamModule")).focus({preventScroll:true});
+        window.ScheduleShowcaseEngine?.resume?.();window.ScheduleShowcaseEngine?.sync?.();
+        if(pendingModuleRoute!==null){const route=pendingModuleRoute;pendingModuleRoute=null;if(route.toExam!==!examModule.hidden)switchModule(route.toExam,route.fromHistory);}
+        if(SHOWCASE.pendingExit){SHOWCASE.pendingExit=false;exitShowcase({immediate:document.hidden});}
+      };
+      // 实验模式的转场不可跳过：期间盖一层透明挡板，点屏幕只会泛起涟漪
+      let shield=null;
+      const fallback=setTimeout(done,experimental?((engine?.PORTAL_END||5.4)*1000+1500):450);
+      finishActiveModule=done;
+      if(experimental){
+        shield=document.createElement("div");shield.className="xk-shield";shield.setAttribute("aria-hidden","true");document.body.append(shield);
+        engine?.portal?.(toExam,point,tapPoint);
+        try{
+          if(source.animate){
+            // 页面框架：起势时后仰变暗（卡片正被一张张拽走），奇点成形后被卷向中心，子弹时间里几乎停住，最后一口吞下
+            source.style.transformOrigin=originIn(source);
+            const pull=(engine?.PORTAL_PULL||2.72),f=t=>t/pull,sp=toExam?1:-1;
+            outAnim=source.animate([
+              {transform:"none",filter:"none",opacity:1},
+              {transform:"perspective(900px) rotateX(7deg) scale(.96)",filter:"brightness(.72)",opacity:1,offset:f(1.3),easing:"cubic-bezier(.5,0,.8,.6)"},
+              {transform:`perspective(900px) rotateX(4deg) scale(.5) rotate(${30*sp}deg)`,filter:"brightness(.9) blur(3px)",opacity:.3,offset:f(2.3),easing:"linear"},
+              {transform:`perspective(900px) rotateX(4deg) scale(.46) rotate(${33*sp}deg)`,filter:"brightness(1) blur(3px)",opacity:.26,offset:f(2.68),easing:"cubic-bezier(.7,0,1,.5)"},
+              {transform:`scale(.01) rotate(${200*sp}deg)`,filter:"blur(8px) brightness(2.5)",opacity:0}
+            ],{duration:pull*1000,easing:"linear",fill:"forwards"});
+          }
+        }catch(_){}
+        swapTimer=setTimeout(swap,(engine?.PORTAL_SWAP||2.74)*1000);
+      } else swap();
+    }
+    function openWeekPicker(trigger) {
+      const grid = document.createElement("div");
+      grid.className = `week-grid${isShowcaseOn() ? " showcase-grid" : ""}`;
+      let selectedButton = null;
+      let choicePending = false;
+      for (let week = 1; week <= SEMESTER.totalWeeks; week++) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `week-option${currentWeekInSemester && week === currentWeek ? " current" : ""}${week === selectedWeek ? " selected" : ""}`;
+        const label = document.createElement("span");
+        const date = document.createElement("small");
+        label.textContent = `第${week}周`;
+        date.textContent = currentWeekInSemester && week === currentWeek ? "本周" : humanDate(mondayOf(week));
+        if (currentWeekInSemester && week < currentWeek) button.classList.add("past");
+        button.setAttribute("aria-label", `第${week}周，${humanDate(mondayOf(week))}开始`);
+        button.append(label, date);
+        if (week === selectedWeek) selectedButton = button;
+        button.addEventListener("click", () => {
+          if (choicePending) return;
+          const choose = () => {
+            closeDialog(false);
+            slideToWeek(week);
+          };
+          if (isShowcaseOn() && !reduceMotion) {
+            choicePending = true;
+            button.classList.add("targeting");
+            weekChoiceTimer = setTimeout(() => {
+              weekChoiceTimer = null;
+              if (!dialog.classList.contains("open") || dialogClosing || dialogKind !== "week") return;
+              choose();
+        }, 720);
+          } else {
+            choose();
+          }
+        });
+        grid.append(button);
+      }
+      openDialog({ title: "选择周次", body: grid, accent: "#5B87BA", kind: "week", closeLabel: "取消", trigger, initialFocus: selectedButton });
+    }
+    function renderSchedule(root, week, { locateToday = false, isCenter = false } = {}) {
+      if(root.dataset.week!==String(week)&&root.parentElement)root.parentElement.scrollLeft=0;
+      root.replaceChildren();
+      root.dataset.week = String(week);
+      const visibleDays = visibleDaysFor(week);
+      root.classList.toggle("has-weekend",visibleDays.length===7);
+      root.setAttribute("aria-label", `第${week}周课程表`);
+      const monday = mondayOf(week);
+      const weekDates = visibleDays.map((_, index) => {
+        const date = new Date(monday);
+        date.setDate(date.getDate() + index);
+        return date;
+      });
+      const selectedIsCurrent = currentWeekInSemester && week === currentWeek;
+      const todayDay = now.getDay() || 7;
+
+      const corner = document.createElement("div");
+      corner.className = "cell";
+      corner.style.gridColumn = "1";
+      corner.style.gridRow = "1";
+      root.append(corner);
+
+      visibleDays.forEach((day, index) => {
+        const isToday = selectedIsCurrent && todayDay === index + 1;
+        const head = document.createElement("div");
+        head.className = `cell day-head${isToday ? " today" : ""}`;
+        head.style.gridColumn = String(index + 2);
+        head.style.gridRow = "1";
+        head.innerHTML = `<span>${day}</span><small>${fmt(weekDates[index])}</small>`;
+        root.append(head);
+        if (isToday) {
+          const shade = document.createElement("div");
+          shade.className = `today-column${locateToday ? " scan" : ""}`;
+          shade.style.gridColumn = String(index + 2);
+          shade.style.gridRow = "1 / 6";
+          root.append(shade);
+        }
+      });
+
+      periods.forEach((pair, rowIndex) => {
+        const label = document.createElement("div");
+        label.className = "cell period";
+        label.style.gridColumn = "1";
+        label.style.gridRow = String(rowIndex + 2);
+        label.innerHTML = `<b>${pair[0]}–${pair[1]}</b><small>${clockText(CLASS_TIMES[pair[0]-1][0])}</small><small>${clockText(CLASS_TIMES[pair[1]-1][1])}</small>`;
+        label.setAttribute("aria-label", `第${pair[0]}至${pair[1]}节，${CLASS_TIMES[pair[0]-1][0]}至${CLASS_TIMES[pair[1]-1][1]}`);
+        root.append(label);
+        visibleDays.forEach((_, dayIndex) => {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.style.gridColumn = String(dayIndex + 2);
+          cell.style.gridRow = String(rowIndex + 2);
+          root.append(cell);
+        });
+      });
+
+      const visible = coursesFor(week);
+      // 本周里：今天的课描一圈，已经过去的日子的课变淡
+      const isThisWeek = currentWeekInSemester && week === currentWeek, weekdayNow = now.getDay() || 7;
+      visible.forEach(course => {
+        const [, , day, start, end] = course;
+        const palette = palettes[course[0]] || fallbackPalette;
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = `course${locateToday && selectedIsCurrent && day === todayDay ? " today-course located" : ""}${isThisWeek && day < weekdayNow ? " is-past" : ""}${isThisWeek && day === weekdayNow ? " is-today" : ""}`;
+        card.style.gridColumn = String(day + 1);
+        card.style.gridRow = `${Math.floor((start-1)/2)+2} / span ${Math.ceil((end-start+1)/2)}`;
+        card.dataset.waveRow = String(Math.floor((start-1)/2)+2);
+        card.dataset.waveCol = String(day + 1);
+        card.dataset.courseName = course[0];
+        card.dataset.courseDay = String(day);
+        card.dataset.courseStart = String(start);
+        card.dataset.courseEnd = String(end);
+        card.dataset.courseLabel = `${course[0]}，${days[day-1]}${courseSpan(course).from}至${courseSpan(course).to}，第${start}至${end}节，${shortPlace(course[1])}${isThisWeek && day === weekdayNow ? "，今天" : ""}`;
+        card.setAttribute("aria-label", card.dataset.courseLabel);
+        const visual = document.createElement("span");
+        visual.className = "course-visual";
+        const name = document.createElement("span");
+        const place = document.createElement("span");
+        name.className = "course-name";
+        place.className = "course-place";
+        const shown = shortNames[course[0]] || course[0];
+        // 四个字的课名只允许在正中间断行（配合 word-break:keep-all），避免“神经生 / 物”
+        if (shown.length === 4) name.append(shown.slice(0,2), document.createElement("wbr"), shown.slice(2));
+        else name.textContent = shown;
+        place.textContent = shortPlace(course[1]);
+        visual.append(name, place);
+        card.append(visual);
+        card.addEventListener("click", () => openCourse(course, card));
+        root.append(card);
+      });
+      if (isThisWeek) syncNowCards(root);
+
+      if (!visible.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty current-empty";
+        empty.setAttribute("aria-label", `第${week}周暂时没有课程`);
+        if (isCenter && isShowcaseOn()) {
+          empty.setAttribute("role", "button");
+          empty.setAttribute("tabindex", "0");
+        }
+        const message = document.createElement("span");
+        message.className = "empty-message";
+        message.append("本周暂时自由 ", el("span", "empty-emoji", "🥳"));
+        empty.append(message);
+        empty.addEventListener("click", () => {
+          if (!isShowcaseOn() || Date.now() < suppressClickUntil) return;
+          const time = Date.now();
+          emptyTapTimes = emptyTapTimes.filter(item => item.week === week && time - item.time < 2600);
+          emptyTapTimes.push({ time, week });
+          celebrateEmpty(message);
+          if (emptyTapTimes.length < 3) return;
+          emptyTapTimes = [];
+          message.textContent = "自由时间已成功具象化 ✦";
+          showcaseDelay(() => {
+            if (message.isConnected) message.textContent = "本周暂时自由 🥳";
+          }, 1700);
+        });
+        empty.addEventListener("keydown", event => {
+          if (!isShowcaseOn() || (event.key !== "Enter" && event.key !== " ")) return;
+          event.preventDefault();
+          empty.click();
+        });
+        root.append(empty);
+      }
+    }
+    function applyZoom() {
+      roots.forEach(root => { root.style.zoom = String(zoom); });
+      document.getElementById("zoomLabel").textContent = `${Math.round(zoom*100)}%`;
+      updateOverflow();
+      requestAnimationFrame(syncModuleHeight);
+    }
+    function weeksForSelection() {
+      return [clampWeek(selectedWeek - 1), selectedWeek, clampWeek(selectedWeek + 1)];
+    }
+    function renderNeighbors(epoch) {
+      if (epoch !== renderEpoch) return;
+      const weeks = weeksForSelection();
+      [0, 2].forEach(index => {
+        if (Number(roots[index].dataset.week) !== weeks[index]) renderSchedule(roots[index], weeks[index]);
+        roots[index].style.zoom = String(zoom);
+      });
+      syncPageAccessibility();
+    }
+    function scheduleNeighborRender(epoch) {
+      if(window.requestIdleCallback)requestIdleCallback(()=>renderNeighbors(epoch),{timeout:700});
+      else setTimeout(()=>renderNeighbors(epoch),180);
+    }
+    function ensureNeighbor(direction) {
+      const index = direction > 0 ? 2 : 0;
+      const week = clampWeek(selectedWeek + (direction > 0 ? 1 : -1));
+      if (Number(roots[index].dataset.week) !== week) renderSchedule(roots[index], week);
+      roots[index].style.zoom = String(zoom);
+      syncPageAccessibility();
+    }
+    function renderCarousel(options = {}) {
+      const epoch = ++renderEpoch;
+      const weeks = weeksForSelection();
+      [0, 2].forEach(index => {
+        if (Number(roots[index].dataset.week) !== weeks[index]) {
+          roots[index].replaceChildren();
+          delete roots[index].dataset.week;
+        }
+      });
+      renderSchedule(roots[1], selectedWeek, { locateToday: Boolean(options.locateToday), isCenter: true });
+      updateHeader({ animate: options.animateHeader !== false });
+      applyZoom();
+      syncPageAccessibility();
+      syncShowcaseControls();
+      if (courseModule.hidden) setModuleInteractive(courseModule, false);
+      scheduleNeighborRender(epoch);
+      if(options.locateToday)locateToday({force:true});
+      if (isShowcaseOn()) {
+        window.ScheduleShowcaseEngine?.sync?.();
+        wakeShowcaseCanvas(1200);
+      }
+    }
+    function updateHeader({ animate = true } = {}) {
+      const monday = mondayOf(selectedWeek);
+      const sunday = new Date(monday);
+      sunday.setDate(sunday.getDate() + 6);
+      weekButton.textContent = `第${selectedWeek}周`;
+      weekButton.setAttribute("aria-label", `选择周次，当前第${selectedWeek}周`);
+      const crossesYear = monday.getFullYear() !== sunday.getFullYear();
+      document.getElementById("weekRange").textContent = `${humanDate(monday, true)}—${humanDate(sunday, crossesYear)}`;
+      const weekline = document.querySelector(".weekline");
+      weekline.classList.remove("is-changing");
+      if (animate) {
+        void weekline.offsetWidth;
+        weekline.classList.add("is-changing");
+      }
+      const hourNow = beijingNow().getHours(), lateNight = hourNow >= 23 || hourNow < 5;
+      document.getElementById("status").textContent = `${lateNight ? "🌙 夜深了" : "今天"} · ${humanDate(now)} · ${currentWeekInSemester ? `第${currentWeek}周` : "当前不在本学期内"}`;
+      // 到头的箭头不禁用，只变淡；再点会有一句提示（彩蛋）
+      document.getElementById("prev").classList.toggle("at-edge", selectedWeek === 1);
+      document.getElementById("next").classList.toggle("at-edge", selectedWeek === SEMESTER.totalWeeks);
+      todayButton.classList.toggle("is-current", currentWeekInSemester && selectedWeek === currentWeek);
+      todayButton.disabled = !currentWeekInSemester;
+      document.getElementById("weekendHint").hidden = !hasWeekendCourses(selectedWeek);
+    }
+    function updateOverflow() {
+      requestAnimationFrame(() => {
+        const currentScroll = scrollAreas[1];
+        shell.classList.toggle("is-overflowing", currentScroll.scrollWidth > currentScroll.clientWidth + 3);
+      });
+    }
+    function setZoom(value) {
+      if (SHOWCASE.phase === "entering" || SHOWCASE.phase === "exiting") return;
+      if(isAnimating||drag)settleNavigation({commit:true});
+      zoom = Math.min(1.4, Math.max(.7, Number(value.toFixed(1))));
+      try { localStorage.setItem("publicScheduleZoom", String(zoom)); } catch (_) {}
+      applyZoom();
+      playCalibration();
+    }
+    function locateToday({ force = false } = {}) {
+      if (!currentWeekInSemester || selectedWeek !== currentWeek || courseModule.hidden) return;
+      const time = performance.now();
+      if (!force && time - todayScanAt < (isShowcaseOn() ? 1900 : 520)) return;
+      todayScanAt = time;
+      const shade = roots[1].querySelector(".today-column");
+      if (shade) {
+        const viewport=scrollAreas[1],bounds=viewport.getBoundingClientRect(),column=shade.getBoundingClientRect();
+        if(column.right>bounds.right)viewport.scrollLeft+=column.right-bounds.right+8;
+        else if(column.left<bounds.left)viewport.scrollLeft-=bounds.left-column.left+8;
+        shade.classList.remove("scan");
+        void shade.offsetWidth;
+        shade.classList.add("scan");
+      }
+      roots[1].querySelectorAll(`.course[data-course-day="${now.getDay() || 7}"]`).forEach(card => {
+        card.classList.remove("today-course", "located");
+        void card.offsetWidth;
+        card.classList.add("today-course", "located");
+      });
+      if (isShowcaseOn()) window.ScheduleShowcaseEngine?.today?.(shade);
+      setTimeout(() => {
+        shade?.classList.remove("scan");
+        roots[1].querySelectorAll(".course.located").forEach(card => card.classList.remove("located"));
+      }, isShowcaseOn() ? 2000 : 760);
+    }
+    function cancelPendingCourse() {
+      courseOpenTicket++;clearTimeout(courseOpenTimer);courseOpenTimer=null;
+      courseOpenTrigger?.classList.remove("course-opening");courseOpenTrigger=null;
+    }
+    function cancelNavigationMotion() {
+      navSerial++; clearTimeout(finishTimer); finishTimer=null;
+      navAnimation?.cancel(); navAnimation=null;
+      cancelAnimationFrame(navQueueFrame); navQueueFrame=0;
+    }
+    function navigationMotion(element, keys, duration, complete) {
+      cancelNavigationMotion();
+      const serial=navSerial;
+      let finished=false, animation=null;
+      const done=()=>{
+        if(finished||serial!==navSerial)return;finished=true;
+        clearTimeout(finishTimer);finishTimer=null;navAnimation=null;
+        animation?.cancel();complete();
+      };
+      if(!reduceMotion&&typeof element.animate==='function') {
+        try {animation=element.animate(keys,{duration,easing:'cubic-bezier(.22,.74,.2,1)',fill:'both'});navAnimation=animation;}
+        catch(_){animation=null;}
+      }
+      if(animation){finishTimer=setTimeout(done,duration+160);animation.finished.then(done,done);}
+      else done();
+    }
+    function settleNavigation({commit=false}={}) {
+      const target=commit?(queuedTarget??pendingTarget):null;
+      cancelPendingCourse();cancelNavigationMotion();
+      isAnimating=false;farJumping=false;pendingTarget=null;pendingOptions={};queuedTarget=null;queuedOptions={};
+      drag=null;queuedGesture=null;
+      track.classList.remove('is-animating','is-moving');
+      shell.classList.remove('moving-next','moving-prev');
+      pages[1].classList.remove('week-jump-out','week-jump-in');
+      setTrack(CENTER);
+      if(target!==null&&target!==selectedWeek){selectedWeek=clampWeek(target);renderCarousel({animateHeader:false});}
+    }
+    function finishQueuedNavigation(completedOptions) {
+      if(typeof completedOptions.after==='function')completedOptions.after();
+      if(queuedTarget!==null) {
+        const serial=navSerial;
+        navQueueFrame=requestAnimationFrame(()=>{
+          navQueueFrame=0;if(serial!==navSerial)return;
+          const target=queuedTarget,options=queuedOptions;queuedTarget=null;queuedOptions={};
+          if(target!==null)slideToWeek(target,options);
+        });
+      }
+    }
+    function finishSlide() {
+      if(!isAnimating||farJumping||pendingTarget===null)return;
+      const completedOptions=pendingOptions;
+      selectedWeek=pendingTarget;pendingTarget=null;pendingOptions={};isAnimating=false;
+      track.classList.remove('is-animating','is-moving');shell.classList.remove('moving-next','moving-prev');
+      // Recenter in the same task as replacing the current week; no CSS transition owns this reset.
+      setTrack(CENTER);renderCarousel(completedOptions);finishQueuedNavigation(completedOptions);
+    }
+    function jumpToWeek(target, options) {
+      cancelPendingCourse();
+      const experimental=isShowcaseOn();isAnimating=true;farJumping=true;pendingTarget=target;pendingOptions=options;
+      track.classList.add('is-moving');
+      if(experimental)window.ScheduleShowcaseEngine?.travel?.(target>selectedWeek?1:-1);
+      navigationMotion(pages[1],[{transform:'translateY(0) scale(1)',opacity:1},{transform:'translateY(-18px) scale(.95)',opacity:0}],experimental?260:165,()=>{
+        if(pendingTarget===null)return;
+        const completedOptions=pendingOptions;selectedWeek=pendingTarget;pendingTarget=null;pendingOptions={};
+        setTrack(CENTER);renderCarousel({...completedOptions,locateToday:false});
+        navigationMotion(pages[1],[{transform:'translateY(22px) scale(.96)',opacity:0},{transform:'translateY(0) scale(1)',opacity:1}],experimental?360:250,()=>{
+          track.classList.remove('is-moving');isAnimating=false;farJumping=false;
+          if(completedOptions.locateToday)locateToday({force:true});finishQueuedNavigation(completedOptions);
+        });
+      });
+    }
+    function slideToWeek(target, options={}) {
+      if(SHOWCASE.phase==='entering'||SHOWCASE.phase==='exiting'||moduleTransitioning)return;
+      target=clampWeek(target);
+      if(isAnimating){queuedTarget=target;queuedOptions=options;return;}
+      // A queued navigation has one owner; a newer click supersedes its scheduled frame.
+      cancelAnimationFrame(navQueueFrame);navQueueFrame=0;queuedTarget=null;queuedOptions={};
+      if(target===selectedWeek) {
+        if(track.style.transform.includes('calc('))snapBack();else setTrack(CENTER);
+        if(options.locateToday)locateToday({force:true});if(typeof options.after==='function')options.after();return;
+      }
+      cancelPendingCourse();
+      if(reduceMotion){settleNavigation();selectedWeek=target;renderCarousel(options);if(typeof options.after==='function')options.after();return;}
+      if(Math.abs(target-selectedWeek)>1){jumpToWeek(target,options);return;}
+      const direction=target>selectedWeek?1:-1;
+      ensureNeighbor(direction);
+      const from=getComputedStyle(track).transform;
+      cancelNavigationMotion();
+      isAnimating=true;pendingTarget=target;pendingOptions=options;
+      track.classList.add('is-moving');shell.classList.add(direction>0?'moving-next':'moving-prev');
+      const destination=direction>0?NEXT:PREVIOUS;
+      setTrack(destination);
+      if(isShowcaseOn())window.ScheduleShowcaseEngine?.travel?.(direction);
+      navigationMotion(track,[{transform:from},{transform:track.style.transform}],isShowcaseOn()?460:320,finishSlide);
+    }
+    function requestDirection(direction) {
+      const base=queuedTarget??pendingTarget??selectedWeek;
+      if(base+direction<1||base+direction>SEMESTER.totalWeeks){edgeToast(direction>0);return;}
+      slideToWeek(clampWeek(base+direction));
+    }
+    function snapBack() {
+      if(isAnimating)return;
+      const from=getComputedStyle(track).transform;
+      cancelNavigationMotion();setTrack(CENTER);track.classList.add('is-moving');
+      shell.classList.remove('moving-next','moving-prev');
+      navigationMotion(track,[{transform:from},{transform:track.style.transform}],isShowcaseOn()?260:190,()=>track.classList.remove('is-moving'));
+    }
+
+    shell.addEventListener("touchstart", event => {
+      if (event.touches.length !== 1 || shell.classList.contains("is-overflowing") || dialog.classList.contains("open") || SHOWCASE.phase === "entering" || SHOWCASE.phase === "exiting") return;
+      const touch = event.touches[0];
+      if (isAnimating) {
+        queuedGesture = { x: touch.clientX, y: touch.clientY };
+        return;
+      }
+      // Preserve an in-progress rebound's visual position when another finger gesture starts.
+      const matrix=getComputedStyle(track).transform;
+      const values=matrix.match(/matrix(?:3d)?\(([^)]+)\)/)?.[1].split(',').map(Number);
+      const tx=values?(values.length===16?values[12]:values[4]):track.offsetWidth*CENTER/100;
+      const baseOffset=tx-track.offsetWidth*CENTER/100;
+      cancelNavigationMotion();queuedTarget=null;queuedOptions={};setTrack(CENTER,baseOffset);
+      track.classList.remove("is-animating");track.classList.add("is-moving");
+      drag={x:touch.clientX,y:touch.clientY,dx:baseOffset,baseOffset,horizontal:false};
+    }, { passive: true });
+    shell.addEventListener("touchmove", event => {
+      if (!drag || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      const dx = touch.clientX - drag.x;
+      const dy = touch.clientY - drag.y;
+      if (!drag.horizontal && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 7) {
+        drag = null;
+        snapBack();
+        return;
+      }
+      if (!drag.horizontal && Math.abs(dx) > 6) {
+        drag.horizontal = true;
+        ensureNeighbor(dx < 0 ? 1 : -1);
+      }
+      if (!drag.horizontal) return;
+      event.preventDefault();
+      shell.classList.toggle("moving-next", dx < 0);
+      shell.classList.toggle("moving-prev", dx > 0);
+      let adjusted = dx + (drag.baseOffset || 0);
+      if ((selectedWeek === 1 && dx > 0) || (selectedWeek === SEMESTER.totalWeeks && dx < 0)) adjusted *= .28;
+      drag.dx = adjusted;
+      setTrack(CENTER, adjusted);
+    }, { passive: false });
+    shell.addEventListener("touchend", event => {
+      if (queuedGesture) {
+        const touch = event.changedTouches[0];
+        if(!touch){queuedGesture=null;return;}
+        const dx = touch.clientX - queuedGesture.x;
+        const dy = touch.clientY - queuedGesture.y;
+        queuedGesture = null;
+        if (Math.abs(dx) > 42 && Math.abs(dx) > Math.abs(dy)) requestDirection(dx < 0 ? 1 : -1);
+        return;
+      }
+      if (!drag) return;
+      const dx = drag.dx;
+      const moved = drag.horizontal;
+      drag = null;
+      if (moved) suppressClickUntil = Date.now() + 300;
+      const threshold = Math.min(72, shell.clientWidth * .20);
+      const pastStart = selectedWeek === 1 && dx > 0, pastEnd = selectedWeek === SEMESTER.totalWeeks && dx < 0;
+      if ((pastStart || pastEnd) && Math.abs(dx) > 16) { edgeToast(pastEnd); snapBack(); return; }
+      if (moved && Math.abs(dx) >= threshold) retireSwipeHint();
+      if (Math.abs(dx) >= threshold) slideToWeek(selectedWeek + (dx < 0 ? 1 : -1));
+      else snapBack();
+    }, { passive: true });
+    shell.addEventListener("touchcancel", () => {
+      drag = null;
+      queuedGesture = null;
+      if (!isAnimating) snapBack();
+    }, { passive: true });
+
+    function refreshDateState() {
+      const freshNow = beijingNow();
+      freshNow.setHours(0,0,0,0);
+      if (fullDate(freshNow) === fullDate(now)) return;
+      const followedToday = currentWeekInSemester && selectedWeek === currentWeek;
+      now = freshNow;
+      currentWeek = weekAt(now);
+      currentWeekInSemester = currentWeek >= 1 && currentWeek <= SEMESTER.totalWeeks;
+      if (followedToday && currentWeekInSemester) selectedWeek = currentWeek;
+      renderCarousel({ animateHeader: false });
+      if (!examModule.hidden) renderExamModule();
+    }
+    function scheduleDateRefresh() {
+      clearTimeout(dateRefreshTimer);
+      const c=beijingNow();
+      const delay=((24-c.getHours())*60-c.getMinutes())*60000-c.getSeconds()*1000-c.getMilliseconds()+60;
+      dateRefreshTimer=setTimeout(()=>{refreshDateState();scheduleDateRefresh();},Math.max(100,delay));
+      // 每次（开页、切回前台、过零点）都顺便刷新“现在 / 下一节”，并重新对齐整分钟计时
+      refreshNowState();
+      scheduleNowTick();
+      updateExamButton();
+      maybeShowNextWeek();
+    }
+    /* ── 现在 / 下一节（r9）──────────────────────────────────
+       顶部提示条 + 本周课表里正在上的课反色显示、今天已下课的课变淡。每分钟刷新一次，静态显示，没有动画。 */
+    let nowTimer = 0, nowStripTarget = null;
+    function syncNowCards(only) {
+      const state = classStateAt(beijingNow()), weekday = now.getDay() || 7;
+      (only ? [only] : roots).forEach(root => {
+        const live = currentWeekInSemester && root.dataset.week === String(currentWeek);
+        root.querySelectorAll(".course").forEach(card => {
+          let isNow = false, done = false;
+          if (live && Number(card.dataset.courseDay) === weekday) {
+            const start = minutesOf(CLASS_TIMES[card.dataset.courseStart-1][0]), end = minutesOf(CLASS_TIMES[card.dataset.courseEnd-1][1]);
+            isNow = state.t >= start && state.t < end;
+            done = state.t >= end;
+          }
+          card.classList.toggle("is-now", isNow);
+          card.classList.toggle("is-done", done);
+          if (card.dataset.courseLabel) card.setAttribute("aria-label", card.dataset.courseLabel + (isNow ? "，正在上课" : done ? "，已下课" : ""));
+        });
+      });
+    }
+    function nowCourseText(course) { return `${shortNames[course[0]] || course[0]} · ${shortPlace(course[1])}`; }
+    function updateNowStrip() {
+      const strip = document.getElementById("nowStrip");
+      nowStripTarget = null;
+      if (!currentWeekInSemester) { strip.hidden = true; return; }
+      const state = classStateAt(beijingNow());
+      const tag = strip.querySelector(".now-tag"), main = strip.querySelector(".now-main"), sub = strip.querySelector(".now-sub");
+      let mode = "next", progress = null;
+      if (state.current) {
+        const c = state.current;
+        mode = "live";
+        tag.textContent = state.inLunch ? "午休中" : "上课中";
+        main.textContent = nowCourseText(c.course);
+        sub.textContent = state.inLunch ? `${c.lunch.resume} 继续` : `还有 ${durationText(c.end - state.t)} 下课`;
+        progress = (state.t - c.start) / (c.end - c.start);
+        nowStripTarget = { course: c.course, date: state.day };
+      } else if (state.next) {
+        tag.textContent = "下一节";
+        main.textContent = `${state.next.from} ${nowCourseText(state.next.course)}`;
+        sub.textContent = `还有 ${durationText(state.next.start - state.t)}`;
+        nowStripTarget = { course: state.next.course, date: state.day };
+      } else {
+        const next = nextCourseAfter(state.day);
+        if (!next) { strip.hidden = true; return; }
+        const diff = Math.round((calendarDay(next.date) - calendarDay(state.day)) / msDay);
+        tag.textContent = "下次有课";
+        main.textContent = `${diff <= 2 ? relativeDay(next.date) : `${humanDate(next.date)} ${weekdayText(next.date)}`} ${courseSpan(next.course).from} ${nowCourseText(next.course)}`;
+        sub.textContent = state.items.length ? "今天的课上完了" : "";
+        nowStripTarget = { course: next.course, date: next.date };
+      }
+      strip.dataset.mode = mode;
+      strip.style.setProperty("--p", progress == null ? "0" : progress.toFixed(3));
+      strip.setAttribute("aria-label", `${tag.textContent}：${main.textContent}${sub.textContent ? `，${sub.textContent}` : ""}。点按查看课程详情`);
+      strip.hidden = false;
+    }
+    function refreshNowState() { updateNowStrip(); syncNowCards(); }
+    function scheduleNowTick() {
+      clearTimeout(nowTimer);
+      const c = beijingNow();
+      nowTimer = setTimeout(() => { if (!document.hidden) { refreshNowState(); scheduleNowTick(); } }, 60000 - c.getSeconds() * 1000 - c.getMilliseconds() + 50);
+    }
+    function openNowStripCourse(trigger) {
+      if (!nowStripTarget || Date.now() < suppressClickUntil || SHOWCASE.phase === "entering" || SHOWCASE.phase === "exiting" || isAnimating || drag || moduleTransitioning) return;
+      const { course, date } = nowStripTarget, palette = palettes[course[0]] || fallbackPalette;
+      openDialog({ title: course[0], body: buildCourseDetail(course, weekAt(date)), accent: palette.ink, kind: "course", trigger, courseName: course[0], focusDelay: isShowcaseOn() ? 350 : null });
+    }
+    /* ── 周末自动显示下周（r10）────────────────────────────
+       周五到周日，本周的课都上完了：打开时直接显示下周。每天最多跳一次，点“回到今天”后当天不再自动跳。 */
+    let autoNextWeekDay = null;
+    function weekFinished() {
+      if (!currentWeekInSemester || currentWeek >= SEMESTER.totalWeeks) return false;
+      const clock = beijingNow(), weekday = clock.getDay() || 7, t = minuteOfDay(clock);
+      if (weekday < 5) return false;
+      return !coursesFor(currentWeek).some(c => c[2] > weekday || (c[2] === weekday && courseSpan(c).end > t));
+    }
+    function maybeShowNextWeek() {
+      const today = calendarDay(now);
+      if (autoNextWeekDay === today || selectedWeek !== currentWeek || isAnimating || drag || moduleTransitioning || courseModule.hidden || !weekFinished()) return;
+      autoNextWeekDay = today;
+      selectedWeek = currentWeek + 1;
+      renderCarousel({ animateHeader: false });
+      toast("本周课已上完，显示下周");
+    }
+    function scheduleAutoEaster() { clearTimeout(autoEasterTimer); }
+    function handleDialogKeydown(event) {
+      if (!dialog.classList.contains("open")) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeDialog();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(dialogCard.querySelectorAll("button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"))
+        .filter(element => !element.hidden && element.getClientRects().length);
+      if (!focusable.length) {
+        event.preventDefault();
+        dialogCard.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialogCard.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    window.addEventListener("schedule:pwa-help", event => {
+      const wrap = document.createElement("div");
+      wrap.className = "install-guide";
+      const icon = document.createElement("div");
+      icon.className = "install-guide-icon";
+      icon.textContent = "▦";
+      const text = document.createElement("p");
+      text.textContent = event.detail?.message || "请使用浏览器菜单将课程表添加到桌面。";
+      wrap.append(icon, text);
+      openDialog({ title:"添加到桌面", body:wrap, accent:"#4F7DFF", kind:"install", closeLabel:"知道了", trigger:dailyMoodButton });
+    });
+
+/* Shared mobile flows; inserted into the main classic script by build_edits.py. */
+let historyPopInFlight = false;
+let deferredHistoryState = null;
+let historyHandling = false;
+let pendingModuleRoute = null;
+let moduleTicket = 0;
+let sheetTicket = 0;
+let courseScrollPosition = 0;
+const shortNames = {
+  '职业发展与规划':'职业规划','高等数学':'高数','体育课':'体育','大学英语':'英语','程序设计':'程序设计',
+  '思想道德与法治':'思修','心理健康教育':'心理健康','大学物理实验':'物理实验','线性代数':'线代','化学实验':'化学实验','程序设计实验':'编程实验'
+};
+function beijingNow() {
+  const c = new Date(Date.now() + 8 * 3600000);
+  return new Date(c.getUTCFullYear(),c.getUTCMonth(),c.getUTCDate(),c.getUTCHours(),c.getUTCMinutes(),c.getUTCSeconds(),c.getUTCMilliseconds());
+}
+function calendarDay(date) { return Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()); }
+function weekAt(date) { return Math.floor((calendarDay(date)-calendarDay(firstMonday))/(7*msDay))+1; }
+function coursesAt(date) {
+  const week = weekAt(date), day = date.getDay() || 7;
+  return week < 1 || week > SEMESTER.totalWeeks ? [] : uniqueCourses(coursesFor(week).filter(c=>c[2]===day)).sort((a,b)=>a[3]-b[3]);
+}
+function nextCourseAfter(date) {
+  const end = mondayOf(SEMESTER.totalWeeks+1);
+  const cursor = new Date(date); cursor.setHours(0,0,0,0); cursor.setDate(cursor.getDate()+1);
+  if(cursor < firstMonday) cursor.setTime(firstMonday.getTime());
+  for(;cursor<end;cursor.setDate(cursor.getDate()+1)) {
+    const list=coursesAt(cursor);
+    if(list.length) return {date:new Date(cursor),course:list[0]};
+  }
+  return null;
+}
+function appendNextCourse(parent,date) {
+  const next=nextCourseAfter(date), note=document.createElement('p'); note.className='next-course-note';
+  if(next) {
+    note.append(document.createTextNode(`下次有课 · ${humanDate(next.date)} ${weekdayText(next.date)}`));
+    const line=document.createElement('strong');
+    line.textContent=`第${next.course[3]}–${next.course[4]}节 · ${shortNames[next.course[0]]||next.course[0]} · ${shortPlace(next.course[1])}`;
+    note.append(line);
+  } else note.textContent='当前课表中没有更晚的课程。';
+  parent.append(note);
+}
+function pushMobileHistory(state) {
+  if(historyHandling)return;
+  if(historyPopInFlight){deferredHistoryState=state;return;}
+  try{history.pushState({...state,scheduleV3:true},'');}catch(_){}
+}
+function sheetOpened() {
+  sheetTicket++;
+  if(historyPopInFlight||!history.state?.dialog)pushMobileHistory({screen:examModule.hidden?'schedule':'exam',dialog:true});
+}
+function sheetClosed() {
+  sheetTicket++;
+  if(historyHandling)return;
+  if(historyPopInFlight){deferredHistoryState=null;return;}
+  if(history.state?.scheduleV3&&history.state.dialog){historyPopInFlight=true;history.back();}
+}
+/* 添加到手机日历（r10）：calendar.ics 由 schedule/make-calendar.js 从本页数据生成，发版前要重新生成。
+   iPhone 用 webcal:// 订阅；安卓（小米等）复制网址到系统日历订阅，或下载文件导入一次。 */
+function openCalendarSheet() {
+  const ua=navigator.userAgent, isAndroid=/Android/i.test(ua), isIOS=!isAndroid&&(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1));
+  const url=`${location.origin}/calendar.ics`, wrap=document.createElement('div');wrap.className='cal-sheet';
+  wrap.append(el('p','','把整学期的课和考试放进手机自带的日历，不打开课程表也能在日历和小组件里看到下一节课。不设提醒，不会响。'));
+  if(isIOS||!isAndroid){
+    if(!isIOS&&!isAndroid)wrap.append(el('h3','','iPhone / iPad'));
+    const sub=document.createElement('a');sub.className='cal-primary';sub.href=`webcal://${location.host}/calendar.ics`;sub.textContent='订阅到 iPhone 日历';
+    wrap.append(sub,el('small','','订阅后课表有变动会自动同步（系统每隔几小时检查一次）。想删除：设置 → 日历 → 账户 → 已订阅的日历。'));
+  }
+  if(isAndroid||!isIOS){
+    if(!isIOS&&!isAndroid)wrap.append(el('h3','','安卓（小米、华为等）'));
+    const field=document.createElement('input');field.className='cal-url';field.readOnly=true;field.value=url;field.setAttribute('aria-label','日历订阅网址');
+    const copy=document.createElement('button');copy.type='button';copy.className=isAndroid?'cal-primary':'cal-secondary';copy.textContent='复制订阅网址';
+    copy.onclick=async()=>{try{await navigator.clipboard.writeText(url);copy.textContent='已复制 ✓';}catch(_){field.focus();field.select();copy.textContent='请长按网址手动复制';}};
+    const steps=document.createElement('ol');
+    ['打开手机自带的“日历”。','在日历的设置里找“导入”或“订阅日历”，选择网址（URL）方式。','粘贴上面的网址，确认。'].forEach(t=>steps.append(el('li','',t)));
+    const file=document.createElement('a');file.className='cal-secondary';file.href='/calendar.ics';file.download='课程表.ics';file.textContent='下载日历文件（导入一次）';
+    wrap.append(field,copy,steps,el('small','','菜单名称因手机型号不同略有差别。找不到订阅入口时，下载日历文件、用日历打开即可导入，但这样导入的不会自动更新，课表变了要重新导入；也可以安装免费的 ICSx⁵ 来订阅。'),file);
+  }
+  openDialog({title:'添加到手机日历',body:wrap,kind:'settings',trigger:document.getElementById('settingsButton')});
+}
+function openPreferences(trigger=document.getElementById('settingsButton')) {
+  const wrap=document.createElement('div');
+  const zoomSection=document.createElement('div');zoomSection.className='pref-section';
+  const zoomTitle=document.createElement('div');zoomTitle.className='pref-label';zoomTitle.innerHTML='<span>课表缩放</span><span id="preferenceZoom"></span>';
+  zoomTitle.lastChild.textContent=`${Math.round(zoom*100)}%`;
+  const zoomButtons=document.createElement('div');zoomButtons.className='pref-actions';
+  [['缩小',-.1],['复位',0],['放大',.1]].forEach(([label,change])=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>{setZoom(change?zoom+change:1);zoomTitle.lastChild.textContent=`${Math.round(zoom*100)}%`;};zoomButtons.append(b);});
+  zoomSection.append(zoomTitle,zoomButtons);wrap.append(zoomSection);
+  const qualitySection=document.createElement('div');qualitySection.className='pref-section';
+  const qualityTitle=document.createElement('div');qualityTitle.className='pref-label';qualityTitle.textContent='实验画质';
+  const qualityButtons=document.createElement('div');qualityButtons.className='pref-actions';
+  let quality='auto';try{quality=localStorage.getItem('scheduleQuality')||'auto';}catch(_){}
+  [['auto','自动'],['smooth','流畅'],['rich','华丽']].forEach(([value,label])=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-pressed',String(value===quality));b.onclick=()=>{try{localStorage.setItem('scheduleQuality',value);}catch(_){}qualityButtons.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));window.ScheduleShowcaseEngine?.qualityChanged?.(value);};qualityButtons.append(b);});
+  qualitySection.append(qualityTitle,qualityButtons);wrap.append(qualitySection);
+  const launch=document.createElement('button');launch.type='button';launch.className='mode-launch';launch.textContent=isShowcaseOn()?'打开实验控制台':'启动实验模式';
+  launch.onclick=async()=>{
+    const loadingTicket=sheetTicket;
+    launch.disabled=true;launch.textContent='准备光场…';
+    try{await ensureShowcaseAssets();}catch(_){launch.disabled=false;launch.textContent='未能加载，点此重试';return;}
+    if(loadingTicket!==sheetTicket || !launch.isConnected)return;
+    launch.disabled=false;launch.textContent=isShowcaseOn()?'打开实验控制台':'启动实验模式';
+    if(document.hidden)return;
+    closeDialog(false);
+    if(isShowcaseOn())window.ScheduleShowcaseEngine.openConsole(trigger);else enterShowcase();
+  };wrap.append(launch);
+  const calendar=document.createElement('button');calendar.type='button';calendar.className='cal-secondary pref-calendar';calendar.textContent='添加到手机日历';calendar.onclick=openCalendarSheet;wrap.append(calendar);
+  if(!window.SchedulePWA?.isStandalone?.()){
+    const install=document.createElement('button');install.type='button';install.className='pwa-install';install.innerHTML='<strong>添加到桌面</strong><small>独立打开 · 支持离线查看</small>';install.onclick=()=>window.SchedulePWA?.requestInstall?.(install);wrap.append(install);
+  }
+  const version=document.createElement('p');version.className='pref-version';version.textContent='课程表 · 小克版 · 作品集示例';wrap.append(version);
+  openDialog({title:'显示与体验',body:wrap,kind:'settings',trigger});
+}
+function onMobilePopState(event) {
+    if(historyPopInFlight){historyPopInFlight=false;if(deferredHistoryState){const s=deferredHistoryState;deferredHistoryState=null;pushMobileHistory(s);}return;}
+    historyHandling=true;
+    const state=event.state;
+    if(dialog.classList.contains('open')&&!state?.dialog)closeDialog(false);
+    if(state?.scheduleV3){
+      const desired=state.screen==='exam';
+      if(state.dialog&&!dialog.classList.contains('open')){try{history.replaceState({...state,dialog:false},'');}catch(_){}}
+      if(moduleTransitioning)pendingModuleRoute={toExam:desired,fromHistory:true};
+      else if(desired!==!examModule.hidden)switchModule(desired,true);
+    }
+    historyHandling=false;
+}
+function initMobile() {
+  try{history.replaceState({scheduleV3:true,screen:'schedule',dialog:false},'');}catch(_){}
+  document.getElementById('settingsButton').onclick=()=>openPreferences();
+  window.addEventListener('popstate',onMobilePopState);
+  const grip=document.querySelector('.sheet-grip');let gesture=null,suppressGripClick=false;
+  grip.addEventListener('pointerdown',e=>{gesture={y:e.clientY,dy:0};dialogCard.style.transition='none';grip.setPointerCapture(e.pointerId);});
+  grip.addEventListener('pointermove',e=>{if(!gesture)return;gesture.dy=Math.max(0,e.clientY-gesture.y);dialogCard.style.transform=`translateY(${gesture.dy}px)`;});
+  const release=()=>{if(!gesture)return;const dy=gesture.dy;gesture=null;suppressGripClick=dy>6;dialogCard.style.transition='';dialogCard.style.transform='';if(dy>65)closeDialog(false);};
+  grip.addEventListener('pointerup',release);grip.addEventListener('pointercancel',()=>{gesture=null;dialogCard.style.transition='';dialogCard.style.transform='';});
+  grip.addEventListener('click',()=>{if(suppressGripClick){suppressGripClick=false;return;}closeDialog(false);});
+  window.addEventListener('focus',()=>refreshDateState());
+}
+
+    window.ScheduleShowcaseHost = {
+      cards: () => !courseModule.hidden ? Array.from(roots[1].querySelectorAll(".course")) : [],
+      targets: () => !courseModule.hidden ? Array.from(roots[1].querySelectorAll(".course")) : [],
+      portalTargets: () => !courseModule.hidden ? Array.from(roots[1].querySelectorAll(".course")) : Array.from(examCard.querySelectorAll(".exam-orb,.exam-item,.study-materials")),
+      week: () => selectedWeek,
+      active: () => isShowcaseOn(),
+      reduceMotion: () => reduceMotion,
+      openDialog,
+      closeDialog,
+      exit: options => exitShowcase(options),
+      finishTransition: () => finishActiveModule?.(),
+      completeEntry: () => completeShowcaseEntry()
+    };
+
+    document.getElementById("prev").addEventListener("click", () => requestDirection(-1));
+    document.getElementById("next").addEventListener("click", () => requestDirection(1));
+    weekButton.addEventListener("click", () => openWeekPicker(weekButton));
+    todayButton.addEventListener("click", () => {
+      if (currentWeekInSemester && selectedWeek === currentWeek && !isAnimating) {
+        // 已经在本周：今天那一列点一下头
+        const shade = roots[1].querySelector(".today-column");
+        if (shade && !reduceMotion) { shade.classList.remove("nudge"); void shade.offsetWidth; shade.classList.add("nudge"); }
+        toast(randomItem(["已经在今天啦 👀", "你就在这周，没走丢 📍", "今天就在这里，哪儿也没去 🫡"]));
+        if (isShowcaseOn()) window.ScheduleShowcaseEngine?.today?.(shade);
+        return;
+      }
+      if (currentWeekInSemester) slideToWeek(currentWeek, { locateToday: true });
+    });
+    dailyMoodButton.addEventListener("click", event => openDailyMood(event.currentTarget));
+    titleTrigger.addEventListener("click", registerTitleTap);
+    const semesterLabel = document.getElementById("semesterLabel");
+    semesterLabel.addEventListener("click", () => { if (!dialog.classList.contains("open") && SHOWCASE.phase !== "entering") openSemesterProgress(semesterLabel); });
+    semesterLabel.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); semesterLabel.click(); } });
+    initSwipeHint();
+    document.getElementById("zoomOut").addEventListener("click", () => setZoom(zoom-.1));
+    document.getElementById("zoomIn").addEventListener("click", () => setZoom(zoom+.1));
+    document.getElementById("fit").addEventListener("click", () => {
+      setZoom(1);
+    });
+    document.getElementById("openExamModule").addEventListener("click", () => switchModule(true));
+    document.getElementById("backToSchedule").addEventListener("click", () => switchModule(false));
+    courseModeBadge.addEventListener("click", () => exitShowcase());
+    examModeBadge.addEventListener("click", event => {
+      if (SHOWCASE.phase === "on" && window.ScheduleShowcaseEngine?.isRunning?.()) window.ScheduleShowcaseEngine.openConsole(event.currentTarget);
+      else exitShowcase();
+    });
+    dialogClose.addEventListener("click", closeDialog);
+    document.getElementById("nowStrip").addEventListener("click", event => openNowStripCourse(event.currentTarget));
+    dialog.addEventListener("click", event => { if (event.target === dialog) closeDialog(); });
+    document.addEventListener("keydown", handleDialogKeydown);
+    document.addEventListener("visibilitychange", () => {
+      if(document.hidden){pendingModuleRoute=null;finishActiveModule?.();settleNavigation({commit:true});pauseShowcaseCanvas();}
+      else {
+        refreshDateState();
+        scheduleDateRefresh();
+        if (isShowcaseOn()) {
+          window.ScheduleShowcaseEngine?.resume?.();
+          wakeShowcaseCanvas(1200);
+        }
+      }
+    });
+    window.addEventListener("pageshow", () => {
+      refreshDateState();
+      scheduleDateRefresh();
+    });
+    window.addEventListener("pagehide", () => {pendingModuleRoute=null;finishActiveModule?.();settleNavigation({commit:true});exitShowcase({immediate:true});});
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const widthChanged=Math.abs(window.innerWidth-layoutWidth)>1;layoutWidth=window.innerWidth;
+        if(widthChanged){if(isAnimating||drag)settleNavigation({commit:true});finishActiveModule?.();}
+        updateOverflow();
+        syncModuleHeight();
+        if (window.ScheduleShowcaseEngine?.isRunning?.()) {
+          if (window.ScheduleShowcaseEngine?.isRunning?.()) window.ScheduleShowcaseEngine.resize();
+          else resizeShowcaseCanvas();
+          wakeShowcaseCanvas(900);
+        }
+      }, 120);
+    });
+
+    function onMotionPreferenceChange(event) {
+      reduceMotion=event.matches;
+      if(reduceMotion){finishActiveModule?.();settleNavigation({commit:true});clearTimeout(dialogFocusTimer);}
+      window.ScheduleShowcaseEngine?.motionChanged?.();
+    }
+    if(motionQuery.addEventListener)motionQuery.addEventListener("change",onMotionPreferenceChange);
+    else motionQuery.addListener?.(onMotionPreferenceChange);
+
+    initMobile();
+    setModuleInteractive(examModule, false);
+    setTrack(CENTER);
+    renderCarousel({ animateHeader: false });
+    requestAnimationFrame(syncModuleHeight);
+    scheduleDateRefresh();
+    scheduleAutoEaster();
+  </script>
+</body>
+</html>
