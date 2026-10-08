@@ -7,6 +7,8 @@
 - **课程表**（`index.html`）：周视图课表，左栏上下课时间，顶部“现在 / 下一节”提示，考试倒数，导出到手机日历，可安装到主屏幕、能离线打开。另有一个夸张的 **WebGL 实验模式**（开场转场、“坠入水晶球”切页、心电扫描、细胞分裂等彩蛋）。
 - **复习刷题页**（`study.html`）：多巴胺撞色风格。每科有考点卡（收藏 / 记住了 / 乱序抽卡）、高频页（编号可点跳转）、刷题（错题本、随机顺序、可信度筛选、“来 10 题”快练、题目反馈复制）、主观题背诵、计时模拟卷。做题记录只存在本机浏览器里，不需要登录。
 
+**在线演示**：https://tsibec-schedule-and-quiz.czynk5tcn2.workers.dev （课程表）· [复习页](https://tsibec-schedule-and-quiz.czynk5tcn2.workers.dev/study)，手机打开效果最好。
+
 仓库里的课程、考试、题目**全部是虚构的示例**，只用来演示功能。
 
 没有框架、没有构建步骤：原生 HTML / CSS / JavaScript，改完文件刷新浏览器就能看到。
@@ -105,6 +107,7 @@ JS / CSS 的网址带版本号，版本变了浏览器一定会去拿新文件�
 
 网站里的链接都是从根路径开始的（`/study`、`/sw.js`），所以要部署在**域名根目录**：
 
+- **Cloudflare Workers 静态资源**（演示站用的就是这个，免费）：仓库根目录的 `wrangler.jsonc` 已经配好（把 `name` 改成你自己的项目名），运行 `npx wrangler deploy` 即可，会得到一个 `*.workers.dev` 地址。`_headers` 照样生效，`/study` 也能直接访问。
 - **Cloudflare Pages**（推荐，免费）：新建项目 → Direct Upload 上传 `site` 文件夹；或者用命令 `npx wrangler pages deploy site --project-name=<你的项目名>`。`_headers` 会自动生效，`/study` 也能直接访问。
 - Netlify、Vercel 同理，发布目录选 `site`。
 - GitHub Pages 的“项目页”地址带子路径（`用户名.github.io/仓库名/`），直接用会找不到文件；要用的话需绑定自定义域名，或者放在 `用户名.github.io` 仓库里。
